@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScalpLayer USDJPY</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      line-height: 1.6;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 6vw, 48px);
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+
+    .notice {
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fde68a;
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin: 0 0 18px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      color: #f8fafc;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    input, select, textarea {
+      background: #020617;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      margin-top: 12px;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .primary {
+      background: #22c55e;
+      color: #052e16;
+    }
+
+    .secondary {
+      background: #334155;
+      color: #e5e7eb;
+    }
+
+    .danger {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 22px;
+      border-radius: 20px;
+      background: #020617;
+      border: 1px solid #334155;
+    }
+
+    .signal {
+      font-size: clamp(44px, 10vw, 76px);
+      font-weight: 900;
+      margin: 8px 0;
+    }
+
+    .buy {
+      color: #22c55e;
+    }
+
+    .sell {
+      color: #ef4444;
+    }
+
+    .wait {
+      color: #cbd5e1;
+    }
+
+    .score {
+      font-size: 42px;
+      font-weight: 900;
+      color: #38bdf8;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .level {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .level span {
+      display: block;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .level strong {
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #334155;
+      padding: 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #94a3b8;
+      background: #020617;
+    }
+
+    .history-wrap {
+      overflow-x: auto;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .small {
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    @media (max-width: 780px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app {
+        padding: 14px;
+      }
+
+      .levels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>ScalpLayer USDJPY</h1>
+      <p class="subtitle">15分足で方向確認、5分足でエントリー判断するスキャルピング補助ツール</p>
+    </header>
+
+    <div class="notice">
+      ※これは売買判断を補助する検証用ツールです。自動売買や利益保証ではありません。実取引では必ず少額・デモ検証から始めてください。
+    </div>
+
+    <main class="grid">
+      <section class="card">
+        <h2>① 15分足の方向確認</h2>
+
+        <label>現在価格</label>
+        <input id="price" type="number" step="0.001" placeholder="例：157.250" />
+
+        <label>15分足 20EMA</label>
+        <input id="ema15" type="number" step="0.001" placeholder="例：157.180" />
+
+        <label>15分足 EMAの向き</label>
+        <select id="ema15Slope">
+          <option value="up">上向き</option>
+          <option value="flat">横ばい</option>
+          <option value="down">下向き</option>
+        </select>
+
+        <label>15分足の高値・安値</label>
+        <select id="trend15">
+          <option value="up">切り上げ気味</option>
+          <option value="range">レンジ気味</option>
+          <option value="down">切り下げ気味</option>
+        </select>
+      </section>
+
+      <section class="card">
+        <h2>② 5分足のエントリー条件</h2>
+
+        <label>5分足 20EMA</label>
+        <input id="ema5" type="number" step="0.001" placeholder="例：157.210" />
+
+        <label>価格は5分足EMA付近？</label>
+        <select id="nearEma5">
+          <option value="yes">はい</option>
+          <option value="maybe">微妙</option>
+          <option value="no">いいえ</option>
+        </select>
+
+        <label>反発ローソク足</label>
+        <select id="candleReaction">
+          <option value="bull">陽線反発</option>
+          <option value="bear">陰線反落</option>
+          <option value="none">なし</option>
+        </select>
+
+        <label>直近高値・安値ブレイク</label>
+        <select id="breakout">
+          <option value="up">直近高値を上抜け</option>
+          <option value="down">直近安値を下抜け</option>
+          <option value="none">まだ抜けていない</option>
+        </select>
+      </section>
+
+      <section class="card">
+        <h2>③ 利確・損切り設定</h2>
+
+        <label>利確幅 pips</label>
+        <input id="tpPips" type="number" step="0.1" value="10" />
+
+        <label>損切り幅 pips</label>
+        <input id="slPips" type="number" step="0.1" value="5" />
+
+        <button class="primary" onclick="analyze()">判定する</button>
+        <button class="secondary" onclick="resetInputs()">入力リセット</button>
+      </section>
+
+      <section class="card">
+        <h2>④ 総合判定</h2>
+        <div class="result-box">
+          <div id="signal" class="signal wait">WAIT</div>
+          <div id="score" class="score">0点</div>
+          <div id="message" class="small">条件を入力して「判定する」を押してください。</div>
+          <div id="pills" class="pill-row"></div>
+        </div>
+
+        <div class="levels">
+          <div class="level">
+            <span>Entry</span>
+            <strong id="entryLevel">-</strong>
+          </div>
+          <div class="level">
+            <span>TP</span>
+            <strong id="tpLevel">-</strong>
+          </div>
+          <div class="level">
+            <span>SL</span>
+            <strong id="slLevel">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card full">
+        <h2>⑤ トレード記録</h2>
+        <div class="grid">
+          <div>
+            <label>結果</label>
+            <select id="tradeResult">
+              <option value="未記入">未記入</option>
+              <option value="勝ち">勝ち</option>
+              <option value="負け">負け</option>
+              <option value="建値">建値</option>
+              <option value="見送り">見送り</option>
+            </select>
+          </div>
+          <div>
+            <label>pips</label>
+            <input id="tradePips" type="number" step="0.1" placeholder="例：8.5 / -5" />
+          </div>
+        </div>
+
+        <label>メモ</label>
+        <textarea id="tradeMemo" placeholder="例：15分足は上昇。5分足EMAまで押して陽線反発。高値更新で買い。"></textarea>
+
+        <button class="primary" onclick="saveTrade()">履歴に保存</button>
+        <button class="danger" onclick="clearHistory()">履歴を全削除</button>
+
+        <p class="small">履歴はこのブラウザ内に保存されます。</p>
+
+        <div class="history-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>日時</th>
+                <th>判定</th>
+                <th>点数</th>
+                <th>Entry</th>
+                <th>TP</th>
+                <th>SL</th>
+                <th>結果</th>
+                <th>pips</th>
+                <th>メモ</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let latestAnalysis = {
+      signal: "WAIT",
+      score: 0,
+      entry: "-",
+      tp: "-",
+      sl: "-"
+    };
+
+    function getNumber(id) {
+      const value = Number(document.getElementById(id).value);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function pipsToPrice(pips) {
+      return pips * 0.01;
+    }
+
+    function analyze() {
+      const price = getNumber("price");
+      const ema15 = getNumber("ema15");
+      const ema5 = getNumber("ema5");
+      const tpPips = getNumber("tpPips") ?? 10;
+      const slPips = getNumber("slPips") ?? 5;
+
+      const ema15Slope = document.getElementById("ema15Slope").value;
+      const trend15 = document.getElementById("trend15").value;
+      const nearEma5 = document.getElementById("nearEma5").value;
+      const candleReaction = document.getElementById("candleReaction").value;
+      const breakout = document.getElementById("breakout").value;
+
+      if (price === null || ema15 === null || ema5 === null) {
+        updateResult("WAIT", 0, "現在価格・15分足EMA・5分足EMAを入力してください。", [], "-", "-", "-");
+        return;
+      }
+
+      let buyScore = 0;
+      let sellScore = 0;
+      const reasons = [];
+
+      if (price > ema15) {
+        buyScore += 20;
+        reasons.push("15分足で価格がEMA上");
+      }
+      if (price < ema15) {
+        sellScore += 20;
+        reasons.push("15分足で価格がEMA下");
+      }
+
+      if (ema15Slope === "up") {
+        buyScore += 20;
+        reasons.push("15分足EMAが上向き");
+      }
+      if (ema15Slope === "down") {
+        sellScore += 20;
+        reasons.push("15分足EMAが下向き");
+      }
+      if (ema15Slope === "flat") {
+        buyScore -= 5;
+        sellScore -= 5;
+        reasons.push("EMA横ばいで慎重");
+      }
+
+      if (trend15 === "up") {
+        buyScore += 20;
+        reasons.push("高値・安値が切り上げ気味");
+      }
+      if (trend15 === "down") {
+        sellScore += 20;
+        reasons.push("高値・安値が切り下げ気味");
+      }
+      if (trend15 === "range") {
+        buyScore -= 10;
+        sellScore -= 10;
+        reasons.push("15分足レンジ気味");
+      }
+
+      if (nearEma5 === "yes") {
+        buyScore += 15;
+        sellScore += 15;
+        reasons.push("5分足EMA付近");
+      }
+      if (nearEma5 === "maybe") {
+        buyScore += 7;
+        sellScore += 7;
+        reasons.push("5分足EMA付近だが微妙");
+      }
+
+      if (candleReaction === "bull") {
+        buyScore += 15;
+        reasons.push("陽線反発");
+      }
+      if (candleReaction === "bear") {
+        sellScore += 15;
+        reasons.push("陰線反落");
+      }
+
+      if (breakout === "up") {
+        buyScore += 10;
+        reasons.push("直近高値上抜け");
+      }
+      if (breakout === "down") {
+        sellScore += 10;
+        reasons.push("直近安値下抜け");
+      }
+      if (breakout === "none") {
+        reasons.push("ブレイク待ち");
+      }
+
+      buyScore = Math.max(0, Math.min(100, buyScore));
+      sellScore = Math.max(0, Math.min(100, sellScore));
+
+      let signal = "WAIT";
+      let score = Math.max(buyScore, sellScore);
+      let message = "条件が弱いため見送り推奨です。";
+      let tp = "-";
+      let sl = "-";
+
+      if (buyScore >= 70 && buyScore >= sellScore + 15) {
+        signal = "BUY";
+        message = "買い条件が優勢です。押し目買い候補。";
+        tp = (price + pipsToPrice(tpPips)).toFixed(3);
+        sl = (price - pipsToPrice(slPips)).toFixed(3);
+      } else if (sellScore >= 70 && sellScore >= buyScore + 15) {
+        signal = "SELL";
+        message = "売り条件が優勢です。戻り売り候補。";
+        tp = (price - pipsToPrice(tpPips)).toFixed(3);
+        sl = (price + pipsToPrice(slPips)).toFixed(3);
+      } else if (score >= 60) {
+        message = "条件は近いですが、方向がやや曖昧です。もう1本待つのが無難です。";
+      }
+
+      updateResult(signal, score, message, reasons, price.toFixed(3), tp, sl);
+    }
+
+    function updateResult(signal, score, message, reasons, entry, tp, sl) {
+      const signalEl = document.getElementById("signal");
+      signalEl.textContent = signal;
+      signalEl.className = "signal " + (signal === "BUY" ? "buy" : signal === "SELL" ? "sell" : "wait");
+
+      document.getElementById("score").textContent = score + "点";
+      document.getElementById("message").textContent = message;
+      document.getElementById("entryLevel").textContent = entry;
+      document.getElementById("tpLevel").textContent = tp;
+      document.getElementById("slLevel").textContent = sl;
+
+      const pills = document.getElementById("pills");
+      pills.innerHTML = "";
+      reasons.forEach(reason => {
+        const span = document.createElement("span");
+        span.className = "pill";
+        span.textContent = reason;
+        pills.appendChild(span);
+      });
+
+      latestAnalysis = { signal, score, entry, tp, sl };
+    }
+
+    function saveTrade() {
+      const result = document.getElementById("tradeResult").value;
+      const pips = document.getElementById("tradePips").value || "";
+      const memo = document.getElementById("tradeMemo").value || "";
+
+      const trade = {
+        date: new Date().toLocaleString("ja-JP"),
+        signal: latestAnalysis.signal,
+        score: latestAnalysis.score,
+        entry: latestAnalysis.entry,
+        tp: latestAnalysis.tp,
+        sl: latestAnalysis.sl,
+        result,
+        pips,
+        memo
+      };
+
+      const history = JSON.parse(localStorage.getItem("scalpLayerHistory") || "[]");
+      history.unshift(trade);
+      localStorage.setItem("scalpLayerHistory", JSON.stringify(history));
+
+      document.getElementById("tradeMemo").value = "";
+      document.getElementById("tradePips").value = "";
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem("scalpLayerHistory") || "[]");
+      const body = document.getElementById("historyBody");
+      body.innerHTML = "";
+
+      history.forEach(trade => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(trade.date)}</td>
+          <td>${escapeHtml(trade.signal)}</td>
+          <td>${escapeHtml(String(trade.score))}</td>
+          <td>${escapeHtml(trade.entry)}</td>
+          <td>${escapeHtml(trade.tp)}</td>
+          <td>${escapeHtml(trade.sl)}</td>
+          <td>${escapeHtml(trade.result)}</td>
+          <td>${escapeHtml(trade.pips)}</td>
+          <td>${escapeHtml(trade.memo)}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function resetInputs() {
+      document.querySelectorAll("input, textarea").forEach(el => {
+        if (el.id === "tpPips") el.value = 10;
+        else if (el.id === "slPips") el.value = 5;
+        else el.value = "";
+      });
+    }
+
+    function clearHistory() {
+      if (!confirm("履歴をすべて削除しますか？")) return;
+      localStorage.removeItem("scalpLayerHistory");
+      renderHistory();
+    }
+
+    renderHistory();
+  </script>
+</body>
+</html>
