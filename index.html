@@ -3,381 +3,442 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ScalpLayer USDJPY Ver.5</title>
+  <title>ScalpLayer USDJPY Ver.7</title>
   <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#065f46 0%,#020617 46%,#000 100%);color:#e5e7eb;line-height:1.6}
-    .app{width:min(1220px,100%);margin:0 auto;padding:18px}
-    header{text-align:center;padding:24px 10px 18px}
-    h1{margin:0;font-size:clamp(30px,7vw,58px);letter-spacing:.04em}
-    .badge{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:999px;background:#16a34a;color:#dcfce7;font-weight:850;font-size:13px}
-    .subtitle{color:#cbd5e1;margin:10px 0 0}
-    .notice{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:#fde68a;padding:12px 14px;border-radius:14px;margin:0 0 16px;font-size:14px}
-    .apiBox{background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.4);color:#bbf7d0;padding:12px 14px;border-radius:14px;margin:0 0 16px;font-size:14px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-    .mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-    .card{background:rgba(15,23,42,.94);border:1px solid #334155;border-radius:22px;padding:18px;box-shadow:0 16px 42px rgba(0,0,0,.32)}
-    .card h2{margin:0 0 14px;font-size:20px;color:#f8fafc}
-    label{display:block;margin:12px 0 6px;color:#cbd5e1;font-size:14px}
-    input,select,textarea,button{width:100%;border:none;border-radius:13px;padding:12px;font-size:16px}
-    input,select,textarea{background:#020617;color:#f8fafc;border:1px solid #475569}
-    textarea{min-height:82px;resize:vertical}
-    button{cursor:pointer;font-weight:850;margin-top:12px;transition:.12s ease}
-    button:active{transform:scale(.98)}
-    .primary{background:#22c55e;color:#052e16}.secondary{background:#334155;color:#e5e7eb}.danger{background:#ef4444;color:#fff}.blue{background:#38bdf8;color:#082f49}.purple{background:#a78bfa;color:#2e1065}.amber{background:#f59e0b;color:#451a03}.green{background:#4ade80;color:#052e16}
-    .result-box{text-align:center;padding:22px;border-radius:20px;background:#020617;border:1px solid #334155}
-    .signal{font-size:clamp(44px,10vw,78px);font-weight:950;margin:6px 0}
-    .buy{color:#22c55e}.sell{color:#ef4444}.wait{color:#cbd5e1}.dangerText{color:#f87171}.goodText{color:#4ade80}.warnText{color:#fbbf24}
-    .score{font-size:42px;font-weight:950;color:#38bdf8}
-    .pill-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
-    .pill{background:#1e293b;border:1px solid #334155;color:#cbd5e1;padding:8px 10px;border-radius:999px;font-size:13px}
-    .box{background:#020617;border:1px solid #334155;border-radius:15px;padding:12px;text-align:center}
-    .box span{display:block;color:#94a3b8;font-size:12px}
-    .box strong{font-size:20px}
-    .buy-border{border-color:rgba(34,197,94,.55)}.sell-border{border-color:rgba(239,68,68,.55)}.gold-border{border-color:rgba(251,191,36,.55)}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{border-bottom:1px solid #334155;padding:10px;text-align:left;white-space:nowrap}
-    th{color:#94a3b8;background:#020617}
-    .history-wrap{overflow-x:auto}.full{grid-column:1/-1}.small{color:#94a3b8;font-size:13px}
-    .checklist{display:grid;gap:8px;margin-top:10px}
-    .check{display:flex;gap:8px;align-items:center;background:#020617;border:1px solid #334155;border-radius:12px;padding:10px;color:#cbd5e1}
-    .check input{width:auto;transform:scale(1.2)}
-    .precheck{font-size:28px;font-weight:950;margin-top:6px}
-    #apiStatus{margin-top:10px;color:#cbd5e1;font-size:13px}
-    @media(max-width:780px){.grid,.mini-grid,.three{grid-template-columns:1fr}.app{padding:13px}}
+    :root {
+      --bg1: #006b4f;
+      --bg2: #07111f;
+      --card: #101827;
+      --input: #020617;
+      --border: #475569;
+      --text: #ffffff;
+      --muted: #cbd5e1;
+      --green: #4ade80;
+      --green-dark: #16a34a;
+      --red: #ef4444;
+      --red-dark: #dc2626;
+      --blue: #334155;
+      --wait: #475569;
+      --yellow: #facc15;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      padding: 20px;
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 12px 0 24px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0 0 8px;
+      letter-spacing: .02em;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .card {
+      background: rgba(16, 24, 39, .95);
+      border: 1px solid rgba(148, 163, 184, .18);
+      border-radius: 22px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+      overflow: hidden;
+    }
+
+    .notice {
+      border: 1px solid rgba(250, 204, 21, .45);
+      background: rgba(250, 204, 21, .08);
+      color: #fde68a;
+    }
+
+    .update {
+      border: 1px solid rgba(74, 222, 128, .35);
+      background: rgba(74, 222, 128, .08);
+      color: #dcfce7;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      margin-top: 10px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 0 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, .15);
+    }
+
+    button {
+      border: none;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .08s ease, opacity .2s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .green { background: var(--green); color: #052e16; }
+    .red { background: var(--red); color: #fff; }
+    .blue { background: var(--blue); color: #fff; }
+
+    .result {
+      font-size: 24px;
+      font-weight: 900;
+      padding: 18px;
+      border-radius: 18px;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .buy { background: var(--green-dark); color: #fff; }
+    .sell { background: var(--red-dark); color: #fff; }
+    .wait { background: var(--wait); color: #fff; }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .statBox {
+      background: rgba(2, 6, 23, .65);
+      border: 1px solid rgba(148, 163, 184, .2);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .statBox strong {
+      display: block;
+      font-size: 24px;
+    }
+
+    .logItem {
+      background: rgba(2, 6, 23, .65);
+      border: 1px solid rgba(148, 163, 184, .2);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      h1 { font-size: 25px; }
+      .card { padding: 20px; border-radius: 20px; }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <h1>ScalpLayer USDJPY</h1>
-    <div class="badge">Ver.5 USD/JPY Live Price</div>
-    <p class="subtitle">FreeForexAPIからドル円の現在値を取得。15分足方向確認、5分足エントリー、ルール順守率まで記録します。</p>
-  </header>
+  <main class="container">
+    <section class="hero">
+      <h1>ScalpLayer USDJPY Ver.7</h1>
+      <p class="small">
+        15分足で方向確認、5分足でエントリー判断。記録まで残す、ドル円スキャルピング練習ツールです。
+      </p>
+    </section>
 
-  <div class="notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</div>
-  <div class="apiBox">Ver.5追加：FreeForexAPIのUSDJPYレート取得ボタンを追加しました。取得に失敗した場合でも、これまで通り手入力で使えます。</div>
+    <section class="card notice">
+      ※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。
+    </section>
 
-  <main class="grid">
+    <section class="card update">
+      Ver.7追加：FreeForexAPIを廃止し、Frankfurter APIでUSD/JPYを取得します。取得失敗時はこれまで通り手入力で使えます。
+    </section>
+
     <section class="card">
       <h2>① USD/JPY 現在値取得</h2>
-      <label>現在価格</label><input id="price" type="number" step="0.001" placeholder="例：157.250">
-      <button class="green" onclick="fetchUsdJpy()">USD/JPY現在値を取得</button>
-      <button class="secondary" onclick="startAutoFetch()">30秒ごとに自動取得</button>
-      <button class="danger" onclick="stopAutoFetch()">自動取得停止</button>
-      <div id="apiStatus">未取得</div>
 
-      <label>15分足 20EMA</label><input id="ema15" type="number" step="0.001" placeholder="例：157.180">
-      <label>15分足 EMAの向き</label><select id="ema15Slope"><option value="up">上向き</option><option value="flat">横ばい</option><option value="down">下向き</option></select>
-      <label>15分足の高値・安値</label><select id="trend15"><option value="up">切り上げ気味</option><option value="range">レンジ気味</option><option value="down">切り下げ気味</option></select>
+      <label for="price">現在価格</label>
+      <input id="price" type="number" step="0.001" placeholder="例：157.250" />
+
+      <button class="green" onclick="fetchRate()">USD/JPY現在値を取得</button>
+      <button class="blue" onclick="startAutoFetch()">30秒ごとに自動取得</button>
+      <button class="red" onclick="stopAutoFetch()">自動取得停止</button>
+
+      <p id="rateStatus" class="small">Frankfurter APIから取得します。</p>
     </section>
 
     <section class="card">
-      <h2>② 5分足のエントリー条件</h2>
-      <label>5分足 20EMA</label><input id="ema5" type="number" step="0.001" placeholder="例：157.210">
-      <label>価格は5分足EMA付近？</label><select id="nearEma5"><option value="yes">はい</option><option value="maybe">微妙</option><option value="no">いいえ</option></select>
-      <label>反発ローソク足</label><select id="candleReaction"><option value="bull">陽線反発</option><option value="bear">陰線反落</option><option value="none">なし</option></select>
-      <label>直近高値・安値ブレイク</label><select id="breakout"><option value="up">直近高値を上抜け</option><option value="down">直近安値を下抜け</option><option value="none">まだ抜けていない</option></select>
+      <h2>② 15分足方向確認</h2>
+
+      <label for="ema15">15分足 20EMA</label>
+      <input id="ema15" type="number" step="0.001" placeholder="例：157.180" />
+
+      <label for="emaDirection">15分足 EMAの向き</label>
+      <select id="emaDirection">
+        <option value="up">上向き</option>
+        <option value="down">下向き</option>
+        <option value="flat">横ばい</option>
+      </select>
     </section>
 
     <section class="card">
-      <h2>③ 取引設定</h2>
-      <label>時間帯</label><select id="session"><option value="東京時間">東京時間</option><option value="ロンドン時間">ロンドン時間</option><option value="NY時間">NY時間</option><option value="その他">その他</option></select>
-      <div class="mini-grid">
-        <div><label>利確幅 pips</label><input id="tpPips" type="number" step="0.1" value="10"></div>
-        <div><label>損切り幅 pips</label><input id="slPips" type="number" step="0.1" value="5"></div>
-      </div>
-      <label>許容スプレッド pips</label><input id="spreadPips" type="number" step="0.1" value="0.3">
-      <button class="primary" onclick="analyze()">判定する</button>
-      <button class="secondary" onclick="resetInputs()">入力リセット</button>
+      <h2>③ 5分足エントリー確認</h2>
+
+      <label for="candleSignal">5分足の形</label>
+      <select id="candleSignal">
+        <option value="buy">買い形：陽線・押し目・上抜け</option>
+        <option value="sell">売り形：陰線・戻り売り・下抜け</option>
+        <option value="none">まだ形なし</option>
+      </select>
+
+      <button class="green" onclick="judgeEntry()">エントリー判定</button>
+
+      <div id="result" class="result wait">判定待ち</div>
+      <p id="reason" class="small"></p>
     </section>
 
     <section class="card">
-      <h2>④ 総合判定</h2>
-      <div class="result-box">
-        <div id="signal" class="signal wait">WAIT</div>
-        <div id="score" class="score">0点</div>
-        <div id="message" class="small">条件を入力して「判定する」を押してください。</div>
-        <div id="pills" class="pill-row"></div>
-      </div>
-      <div class="three">
-        <div class="box buy-border"><span>BUY</span><strong id="buyScoreView">0</strong></div>
-        <div class="box sell-border"><span>SELL</span><strong id="sellScoreView">0</strong></div>
-        <div class="box gold-border"><span>期待値風</span><strong id="edgeView">0</strong></div>
-      </div>
-      <div class="three">
-        <div class="box"><span>Entry</span><strong id="entryLevel">-</strong></div>
-        <div class="box"><span>TP</span><strong id="tpLevel">-</strong></div>
-        <div class="box"><span>SL</span><strong id="slLevel">-</strong></div>
-      </div>
-    </section>
+      <h2>④ トレード記録</h2>
 
-    <section class="card full">
-      <h2>⑤ トレード前ガード</h2>
-      <div class="mini-grid">
-        <div class="checklist">
-          <label class="check"><input type="checkbox" id="ruleDirection"> 15分足の方向と同じ方向だけ狙った</label>
-          <label class="check"><input type="checkbox" id="ruleEma"> 5分足EMA付近まで待った</label>
-          <label class="check"><input type="checkbox" id="ruleBreak"> 反発またはブレイクを確認した</label>
+      <div class="grid">
+        <div>
+          <label for="tradeResult">結果</label>
+          <select id="tradeResult">
+            <option value="win">勝ち</option>
+            <option value="lose">負け</option>
+            <option value="draw">引き分け</option>
+          </select>
         </div>
-        <div class="checklist">
-          <label class="check"><input type="checkbox" id="ruleNoChase"> 飛び乗り・追いかけエントリーではない</label>
-          <label class="check"><input type="checkbox" id="ruleRisk"> 利確・損切りを先に決めた</label>
-          <label class="check"><input type="checkbox" id="ruleNews"> 指標・要人発言直前ではない</label>
+        <div>
+          <label for="ruleFollowed">ルール順守</label>
+          <select id="ruleFollowed">
+            <option value="auto">直前判定に従う</option>
+            <option value="yes">守った</option>
+            <option value="no">破った</option>
+          </select>
         </div>
       </div>
-      <button class="amber" onclick="checkPreTrade()">トレード前チェック</button>
-      <div class="result-box" style="margin-top:14px">
-        <div id="precheckStatus" class="precheck wait">未チェック</div>
-        <div id="precheckMessage" class="small">6項目中5つ以上なら検証対象として保存しやすくなります。</div>
-      </div>
-    </section>
 
-    <section class="card full">
-      <h2>⑥ シナリオメモ</h2>
-      <div class="mini-grid">
-        <div><label>上に行くなら</label><textarea id="upScenario" placeholder="例：15分足EMA上で5分足が押し目を作り、高値更新ならBUY候補"></textarea></div>
-        <div><label>下に行くなら</label><textarea id="downScenario" placeholder="例：15分足EMA下に戻り、5分足が戻り売り形ならSELL候補"></textarea></div>
-      </div>
-      <button class="purple" onclick="fillMemoTemplate()">検証メモテンプレを入れる</button>
-    </section>
+      <button class="blue" onclick="recordTrade()">記録する</button>
+      <button class="red" onclick="resetStats()">記録をリセット</button>
 
-    <section class="card full">
-      <h2>⑦ 検証成績</h2>
-      <div class="three">
-        <div class="box"><span>総記録数</span><strong id="totalCount">0</strong></div>
-        <div class="box"><span>勝率</span><strong id="winRate">0%</strong></div>
-        <div class="box"><span>合計pips</span><strong id="totalPips">0</strong></div>
-        <div class="box"><span>平均pips</span><strong id="avgPips">0</strong></div>
-        <div class="box"><span>ルール順守率</span><strong id="ruleRate">0%</strong></div>
-        <div class="box"><span>平均期待値風</span><strong id="avgEdge">0</strong></div>
+      <div class="grid">
+        <div class="statBox">勝ち<strong id="wins">0</strong></div>
+        <div class="statBox">負け<strong id="loses">0</strong></div>
+        <div class="statBox">引き分け<strong id="draws">0</strong></div>
+        <div class="statBox">順守率<strong id="ruleRate">0%</strong></div>
       </div>
-    </section>
 
-    <section class="card full">
-      <h2>⑧ 時間帯別成績</h2>
-      <div class="history-wrap">
-        <table><thead><tr><th>時間帯</th><th>回数</th><th>勝率</th><th>合計pips</th></tr></thead><tbody id="sessionStatsBody"></tbody></table>
-      </div>
-    </section>
-
-    <section class="card full">
-      <h2>⑨ トレード記録</h2>
-      <div class="mini-grid">
-        <div><label>結果</label><select id="tradeResult"><option value="未記入">未記入</option><option value="勝ち">勝ち</option><option value="負け">負け</option><option value="建値">建値</option><option value="見送り">見送り</option></select></div>
-        <div><label>pips</label><input id="tradePips" type="number" step="0.1" placeholder="例：8.5 / -5"></div>
-      </div>
-      <label>メモ</label><textarea id="tradeMemo" placeholder="例：15分足は上昇。5分足EMAまで押して陽線反発。高値更新で買い。"></textarea>
-      <button class="primary" onclick="saveTrade()">履歴に保存</button>
-      <button class="blue" onclick="exportCSV()">CSV出力</button>
-      <button class="danger" onclick="clearHistory()">履歴を全削除</button>
-      <p class="small">Ver.5は現在値取得を追加。EMAはまだ手入力なので、チャートを見ながら入力してください。</p>
-      <div class="history-wrap"><table><thead><tr><th>日時</th><th>時間帯</th><th>判定</th><th>点数</th><th>BUY</th><th>SELL</th><th>期待値風</th><th>Entry</th><th>TP</th><th>SL</th><th>ルール</th><th>事前判定</th><th>結果</th><th>pips</th><th>メモ</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+      <h3>記録ログ</h3>
+      <div id="log" class="small">まだ記録はありません。</div>
     </section>
   </main>
-</div>
 
-<script>
-let latestAnalysis={signal:"WAIT",score:0,buyScore:0,sellScore:0,edge:0,entry:"-",tp:"-",sl:"-"};
-let latestPrecheck={status:"未チェック",count:0};
-let autoFetchTimer=null;
-const storageKey="scalpLayerHistoryV5";
-const apiUrl="https://www.freeforexapi.com/api/live?pairs=USDJPY";
+  <script>
+    let autoTimer = null;
+    let wins = 0;
+    let loses = 0;
+    let draws = 0;
+    let ruleTrades = 0;
+    let totalTrades = 0;
+    let lastJudgeOk = false;
+    let lastJudgeText = "判定なし";
 
-function getNumber(id){const v=Number(document.getElementById(id).value);return Number.isFinite(v)?v:null}
-function pipsToPrice(pips){return pips*0.01}
+    window.addEventListener("load", () => {
+      loadStats();
+      updateStatsView();
+    });
 
-async function fetchUsdJpy(){
-  const status=document.getElementById("apiStatus");
-  status.textContent="取得中...";
-  try{
-    const res=await fetch(apiUrl,{cache:"no-store"});
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const data=await res.json();
-    const rate=data?.rates?.USDJPY?.rate;
-    const timestamp=data?.rates?.USDJPY?.timestamp;
-    if(!rate) throw new Error("USDJPY rate not found");
-    document.getElementById("price").value=Number(rate).toFixed(3);
-    const time=timestamp ? new Date(timestamp*1000).toLocaleString("ja-JP") : new Date().toLocaleString("ja-JP");
-    status.textContent="取得成功：USD/JPY "+Number(rate).toFixed(3)+" / "+time;
-  }catch(err){
-    status.textContent="取得失敗：API停止・CORS制限・仕様変更の可能性があります。手入力で使ってください。";
-    console.error(err);
-  }
-}
+    async function fetchRate() {
+      const status = document.getElementById("rateStatus");
+      status.textContent = "取得中...";
 
-function startAutoFetch(){
-  fetchUsdJpy();
-  stopAutoFetch(false);
-  autoFetchTimer=setInterval(fetchUsdJpy,30000);
-  document.getElementById("apiStatus").textContent="自動取得を開始しました。30秒ごとに更新します。";
-}
+      try {
+        const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=JPY");
+        const data = await res.json();
 
-function stopAutoFetch(show=true){
-  if(autoFetchTimer){clearInterval(autoFetchTimer);autoFetchTimer=null;}
-  if(show) document.getElementById("apiStatus").textContent="自動取得を停止しました。";
-}
+        if (!data || !data.rates || !data.rates.JPY) {
+          throw new Error("rate not found");
+        }
 
-function analyze(){
-  const price=getNumber("price"),ema15=getNumber("ema15"),ema5=getNumber("ema5");
-  const tpPips=getNumber("tpPips")??10,slPips=getNumber("slPips")??5,spreadPips=getNumber("spreadPips")??0.3;
-  const ema15Slope=document.getElementById("ema15Slope").value;
-  const trend15=document.getElementById("trend15").value;
-  const nearEma5=document.getElementById("nearEma5").value;
-  const candleReaction=document.getElementById("candleReaction").value;
-  const breakout=document.getElementById("breakout").value;
+        const rate = Number(data.rates.JPY).toFixed(3);
+        document.getElementById("price").value = rate;
+        status.textContent = "取得成功：Frankfurter API / USDJPY = " + rate;
+      } catch (e) {
+        status.textContent = "取得失敗：API停止・通信エラーの可能性があります。手入力で使えます。";
+      }
+    }
 
-  if(price===null||ema15===null||ema5===null){updateResult("WAIT",0,0,0,0,"現在価格・15分足EMA・5分足EMAを入力してください。",[],"-","-","-");return}
+    function startAutoFetch() {
+      stopAutoFetch();
+      fetchRate();
+      autoTimer = setInterval(fetchRate, 30000);
+      document.getElementById("rateStatus").textContent = "30秒ごとに自動取得中...";
+    }
 
-  let buyScore=0,sellScore=0;const reasons=[];
-  if(price>ema15){buyScore+=20;reasons.push("15分足で価格がEMA上")}
-  if(price<ema15){sellScore+=20;reasons.push("15分足で価格がEMA下")}
-  if(ema15Slope==="up"){buyScore+=20;reasons.push("15分足EMAが上向き")}
-  if(ema15Slope==="down"){sellScore+=20;reasons.push("15分足EMAが下向き")}
-  if(ema15Slope==="flat"){buyScore-=5;sellScore-=5;reasons.push("EMA横ばいで慎重")}
-  if(trend15==="up"){buyScore+=20;reasons.push("高値・安値が切り上げ気味")}
-  if(trend15==="down"){sellScore+=20;reasons.push("高値・安値が切り下げ気味")}
-  if(trend15==="range"){buyScore-=10;sellScore-=10;reasons.push("15分足レンジ気味")}
-  if(nearEma5==="yes"){buyScore+=15;sellScore+=15;reasons.push("5分足EMA付近")}
-  if(nearEma5==="maybe"){buyScore+=7;sellScore+=7;reasons.push("5分足EMA付近だが微妙")}
-  if(candleReaction==="bull"){buyScore+=15;reasons.push("陽線反発")}
-  if(candleReaction==="bear"){sellScore+=15;reasons.push("陰線反落")}
-  if(breakout==="up"){buyScore+=10;reasons.push("直近高値上抜け")}
-  if(breakout==="down"){sellScore+=10;reasons.push("直近安値下抜け")}
-  if(breakout==="none"){reasons.push("ブレイク待ち")}
+    function stopAutoFetch() {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        document.getElementById("rateStatus").textContent = "自動取得を停止しました。";
+      }
+    }
 
-  buyScore=Math.max(0,Math.min(100,buyScore));
-  sellScore=Math.max(0,Math.min(100,sellScore));
-  const rr=slPips>0?tpPips/slPips:0;
-  const rawEdge=Math.round((Math.max(buyScore,sellScore)-50)*rr-spreadPips*10);
-  const edge=Math.max(-50,Math.min(100,rawEdge));
+    function judgeEntry() {
+      const price = Number(document.getElementById("price").value);
+      const ema15 = Number(document.getElementById("ema15").value);
+      const emaDirection = document.getElementById("emaDirection").value;
+      const candleSignal = document.getElementById("candleSignal").value;
+      const result = document.getElementById("result");
+      const reason = document.getElementById("reason");
 
-  let signal="WAIT",score=Math.max(buyScore,sellScore),message="条件が弱いため見送り推奨です。",tp="-",sl="-";
-  if(buyScore>=70&&buyScore>=sellScore+15&&edge>=20){
-    signal="BUY";message="買い条件が優勢です。押し目買い候補。";tp=(price+pipsToPrice(tpPips)).toFixed(3);sl=(price-pipsToPrice(slPips)).toFixed(3)
-  }else if(sellScore>=70&&sellScore>=buyScore+15&&edge>=20){
-    signal="SELL";message="売り条件が優勢です。戻り売り候補。";tp=(price-pipsToPrice(tpPips)).toFixed(3);sl=(price+pipsToPrice(slPips)).toFixed(3)
-  }else if(score>=60){
-    message="条件は近いですが、方向または期待値風スコアが不足。もう1本待つのが無難です。"
-  }
-  updateResult(signal,score,buyScore,sellScore,edge,message,reasons,price.toFixed(3),tp,sl);
-}
+      result.className = "result wait";
+      lastJudgeOk = false;
+      lastJudgeText = "見送り";
 
-function updateResult(signal,score,buyScore,sellScore,edge,message,reasons,entry,tp,sl){
-  const signalEl=document.getElementById("signal");
-  signalEl.textContent=signal;signalEl.className="signal "+(signal==="BUY"?"buy":signal==="SELL"?"sell":"wait");
-  document.getElementById("score").textContent=score+"点";
-  document.getElementById("message").textContent=message;
-  document.getElementById("buyScoreView").textContent=buyScore;
-  document.getElementById("sellScoreView").textContent=sellScore;
-  document.getElementById("edgeView").textContent=edge;
-  document.getElementById("entryLevel").textContent=entry;
-  document.getElementById("tpLevel").textContent=tp;
-  document.getElementById("slLevel").textContent=sl;
-  const pills=document.getElementById("pills");pills.innerHTML="";
-  reasons.forEach(r=>{const s=document.createElement("span");s.className="pill";s.textContent=r;pills.appendChild(s)});
-  latestAnalysis={signal,score,buyScore,sellScore,edge,entry,tp,sl};
-}
+      if (!price || !ema15) {
+        result.textContent = "入力不足";
+        reason.textContent = "現在価格と15分足20EMAを入力してください。";
+        lastJudgeText = "入力不足";
+        return;
+      }
 
-function checkedCount(){return ["ruleDirection","ruleEma","ruleBreak","ruleNoChase","ruleRisk","ruleNews"].filter(id=>document.getElementById(id).checked).length}
-function getRuleSummary(){return checkedCount()+"/6"}
+      if (price > ema15 && emaDirection === "up" && candleSignal === "buy") {
+        result.textContent = "買い優勢";
+        result.className = "result buy";
+        reason.textContent = "現在価格が15分足EMAより上、EMA上向き、5分足も買い形です。";
+        lastJudgeOk = true;
+        lastJudgeText = "買い優勢";
+        return;
+      }
 
-function checkPreTrade(){
-  const c=checkedCount();
-  let status="見送り推奨",cls="precheck dangerText",msg="ルール不足です。ここで入ると感情トレードになりやすいです。";
-  if(c>=5&&latestAnalysis.signal!=="WAIT"){status="検証OK";cls="precheck goodText";msg="条件は揃っています。実戦ではなく、まずは検証記録として扱うのが安全です。"}
-  else if(c>=5){status="待機OK";cls="precheck warnText";msg="ルールは揃っていますが、総合判定はWAITです。次の足を待つ候補。"}
-  else if(c>=4){status="要注意";cls="precheck warnText";msg="あと1項目足りません。飛び乗り禁止の札を貼って待ちましょう。"}
-  document.getElementById("precheckStatus").textContent=status;
-  document.getElementById("precheckStatus").className=cls;
-  document.getElementById("precheckMessage").textContent=msg;
-  latestPrecheck={status,count:c};
-}
+      if (price < ema15 && emaDirection === "down" && candleSignal === "sell") {
+        result.textContent = "売り優勢";
+        result.className = "result sell";
+        reason.textContent = "現在価格が15分足EMAより下、EMA下向き、5分足も売り形です。";
+        lastJudgeOk = true;
+        lastJudgeText = "売り優勢";
+        return;
+      }
 
-function fillMemoTemplate(){
-  const session=document.getElementById("session").value;
-  const up=document.getElementById("upScenario").value;
-  const down=document.getElementById("downScenario").value;
-  const template=`時間帯：${session}
-上シナリオ：${up}
-下シナリオ：${down}
-15分足の方向：
-5分足の形：
-エントリー理由：
-不安要素：
-次回改善：`;
-  document.getElementById("tradeMemo").value=template;
-}
+      result.textContent = "見送り";
+      result.className = "result wait";
+      reason.textContent = "15分足方向と5分足エントリー形が揃っていません。ここは待ちです。";
+    }
 
-function saveTrade(){
-  const trade={date:new Date().toLocaleString("ja-JP"),session:document.getElementById("session").value,signal:latestAnalysis.signal,score:latestAnalysis.score,buyScore:latestAnalysis.buyScore,sellScore:latestAnalysis.sellScore,edge:latestAnalysis.edge,entry:latestAnalysis.entry,tp:latestAnalysis.tp,sl:latestAnalysis.sl,rule:getRuleSummary(),precheck:latestPrecheck.status,result:document.getElementById("tradeResult").value,pips:document.getElementById("tradePips").value||"",memo:document.getElementById("tradeMemo").value||""};
-  const history=JSON.parse(localStorage.getItem(storageKey)||"[]");history.unshift(trade);localStorage.setItem(storageKey,JSON.stringify(history));
-  document.getElementById("tradeMemo").value="";document.getElementById("tradePips").value="";
-  renderHistory();
-}
+    function recordTrade() {
+      const r = document.getElementById("tradeResult").value;
+      const rule = document.getElementById("ruleFollowed").value;
+      const price = document.getElementById("price").value || "未入力";
+      const ema15 = document.getElementById("ema15").value || "未入力";
 
-function renderHistory(){
-  const history=JSON.parse(localStorage.getItem(storageKey)||"[]");const body=document.getElementById("historyBody");body.innerHTML="";
-  history.forEach(t=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${e(t.date)}</td><td>${e(t.session)}</td><td>${e(t.signal)}</td><td>${e(t.score)}</td><td>${e(t.buyScore)}</td><td>${e(t.sellScore)}</td><td>${e(t.edge)}</td><td>${e(t.entry)}</td><td>${e(t.tp)}</td><td>${e(t.sl)}</td><td>${e(t.rule)}</td><td>${e(t.precheck)}</td><td>${e(t.result)}</td><td>${e(t.pips)}</td><td>${e(t.memo)}</td>`;body.appendChild(tr)});
-  updateStats(history);updateSessionStats(history);
-}
+      if (r === "win") wins++;
+      if (r === "lose") loses++;
+      if (r === "draw") draws++;
 
-function updateStats(history){
-  const decided=history.filter(t=>t.result!=="未記入"&&t.result!=="見送り");
-  const wins=history.filter(t=>t.result==="勝ち").length;
-  const pips=history.map(t=>Number(t.pips)).filter(n=>Number.isFinite(n));
-  const edges=history.map(t=>Number(t.edge)).filter(n=>Number.isFinite(n));
-  const totalPips=pips.reduce((a,b)=>a+b,0);
-  const ruleOk=history.filter(t=>Number(String(t.rule||"0/6").split("/")[0])>=5).length;
-  document.getElementById("totalCount").textContent=history.length;
-  document.getElementById("winRate").textContent=decided.length?Math.round((wins/decided.length)*100)+"%":"0%";
-  document.getElementById("totalPips").textContent=totalPips.toFixed(1);
-  document.getElementById("avgPips").textContent=pips.length?(totalPips/pips.length).toFixed(2):"0";
-  document.getElementById("ruleRate").textContent=history.length?Math.round((ruleOk/history.length)*100)+"%":"0%";
-  document.getElementById("avgEdge").textContent=edges.length?(edges.reduce((a,b)=>a+b,0)/edges.length).toFixed(1):"0";
-}
+      totalTrades++;
 
-function updateSessionStats(history){
-  const sessions=["東京時間","ロンドン時間","NY時間","その他"];
-  const body=document.getElementById("sessionStatsBody");body.innerHTML="";
-  sessions.forEach(s=>{
-    const list=history.filter(t=>t.session===s);
-    const decided=list.filter(t=>t.result!=="未記入"&&t.result!=="見送り");
-    const wins=list.filter(t=>t.result==="勝ち").length;
-    const pips=list.map(t=>Number(t.pips)).filter(n=>Number.isFinite(n)).reduce((a,b)=>a+b,0);
-    const wr=decided.length?Math.round((wins/decided.length)*100)+"%":"0%";
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${s}</td><td>${list.length}</td><td>${wr}</td><td>${pips.toFixed(1)}</td>`;
-    body.appendChild(tr)
-  });
-}
+      let followed = false;
+      if (rule === "yes") followed = true;
+      if (rule === "no") followed = false;
+      if (rule === "auto") followed = lastJudgeOk;
 
-function exportCSV(){
-  const history=JSON.parse(localStorage.getItem(storageKey)||"[]");
-  const rows=[["日時","時間帯","判定","点数","BUY","SELL","期待値風","Entry","TP","SL","ルール","事前判定","結果","pips","メモ"],...history.map(t=>[t.date,t.session,t.signal,t.score,t.buyScore,t.sellScore,t.edge,t.entry,t.tp,t.sl,t.rule,t.precheck,t.result,t.pips,t.memo])];
-  const csv=rows.map(row=>row.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(",")).join("\n");
-  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});const url=URL.createObjectURL(blob);const a=document.createElement("a");
-  a.href=url;a.download="scalplayer_usdjpy_v5_history.csv";a.click();URL.revokeObjectURL(url);
-}
+      if (followed) ruleTrades++;
 
-function resetInputs(){
-  document.querySelectorAll("input, textarea").forEach(el=>{
-    if(el.id==="tpPips")el.value=10;
-    else if(el.id==="slPips")el.value=5;
-    else if(el.id==="spreadPips")el.value=0.3;
-    else if(el.type==="checkbox")el.checked=false;
-    else el.value="";
-  });
-  document.getElementById("apiStatus").textContent="未取得";
-  document.getElementById("precheckStatus").textContent="未チェック";
-  document.getElementById("precheckStatus").className="precheck wait";
-  document.getElementById("precheckMessage").textContent="6項目中5つ以上なら検証対象として保存しやすくなります。";
-  latestPrecheck={status:"未チェック",count:0};
-}
-function clearHistory(){if(!confirm("履歴をすべて削除しますか？"))return;localStorage.removeItem(storageKey);renderHistory()}
-function e(text){return String(text??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-renderHistory();
-</script>
+      addLog(r, followed, price, ema15);
+      saveStats();
+      updateStatsView();
+    }
+
+    function addLog(result, followed, price, ema15) {
+      const log = document.getElementById("log");
+      const now = new Date();
+      const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け";
+      const followText = followed ? "守った" : "破った/見送り外";
+      const item = document.createElement("div");
+      item.className = "logItem";
+      item.textContent = `${now.toLocaleString()}｜${resultText}｜${followText}｜判定：${lastJudgeText}｜価格：${price}｜15分EMA：${ema15}`;
+
+      if (log.textContent === "まだ記録はありません。") {
+        log.textContent = "";
+      }
+      log.prepend(item);
+    }
+
+    function updateStatsView() {
+      document.getElementById("wins").textContent = wins;
+      document.getElementById("loses").textContent = loses;
+      document.getElementById("draws").textContent = draws;
+      const rate = totalTrades === 0 ? 0 : Math.round((ruleTrades / totalTrades) * 100);
+      document.getElementById("ruleRate").textContent = rate + "%";
+    }
+
+    function saveStats() {
+      const data = { wins, loses, draws, ruleTrades, totalTrades };
+      localStorage.setItem("scalplayer_usdjpy_stats_v7", JSON.stringify(data));
+    }
+
+    function loadStats() {
+      try {
+        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v7");
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        wins = data.wins || 0;
+        loses = data.loses || 0;
+        draws = data.draws || 0;
+        ruleTrades = data.ruleTrades || 0;
+        totalTrades = data.totalTrades || 0;
+      } catch (e) {}
+    }
+
+    function resetStats() {
+      if (!confirm("記録をリセットしますか？")) return;
+      wins = 0;
+      loses = 0;
+      draws = 0;
+      ruleTrades = 0;
+      totalTrades = 0;
+      localStorage.removeItem("scalplayer_usdjpy_stats_v7");
+      document.getElementById("log").textContent = "まだ記録はありません。";
+      updateStatsView();
+    }
+  </script>
 </body>
 </html>
