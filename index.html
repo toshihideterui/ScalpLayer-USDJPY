@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.0</title>
+  <title>ScalpLayer USDJPY v1.1</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -92,7 +92,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.0</h1>
+      <h1>ScalpLayer USDJPY v1.1</h1>
       <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
     </section>
 
@@ -101,7 +101,7 @@
     </section>
 
     <section class="card update">
-      v1.0完成版：TwelveData対応、15分足20EMA自動計算、5分足自動分析、判定理由表示、5分ごと自動分析ON/OFFに対応しました。
+      v1.1：トレード記録からルール順守を撤去し、買い優勢・売り優勢サイン発生時の音アラートを追加しました。
     </section>
 
     <section class="card">
@@ -116,6 +116,8 @@
       <h2>② 自動分析</h2>
       <button class="green" onclick="runAnalysis()">USD/JPYを自動分析</button>
       <button id="autoBtn" class="blue" onclick="toggleAutoAnalysis()">5分ごと自動分析 ON</button>
+      <button id="alertBtn" class="blue" onclick="toggleSoundAlert()">音アラート ON</button>
+      <p id="alertStatus" class="small">音アラート：OFF。ONにすると買い優勢・売り優勢が新しく出た時に音で知らせます。</p>
       <p id="status" class="small">待機中です。</p>
       <p id="lastTime" class="small">最終分析：未実行</p>
     </section>
@@ -136,31 +138,19 @@
 
     <section class="card">
       <h2>④ トレード記録</h2>
-      <div class="grid">
-        <div>
-          <label for="tradeResult">結果</label>
-          <select id="tradeResult">
-            <option value="win">勝ち</option>
-            <option value="lose">負け</option>
-            <option value="draw">引き分け</option>
-          </select>
-        </div>
-        <div>
-          <label for="ruleFollowed">ルール順守</label>
-          <select id="ruleFollowed">
-            <option value="auto">直前判定に従う</option>
-            <option value="yes">守った</option>
-            <option value="no">破った</option>
-          </select>
-        </div>
-      </div>
+      <label for="tradeResult">結果</label>
+      <select id="tradeResult">
+        <option value="win">勝ち</option>
+        <option value="lose">負け</option>
+        <option value="draw">引き分け</option>
+      </select>
       <button class="blue" onclick="recordTrade()">記録する</button>
       <button class="red" onclick="resetStats()">記録をリセット</button>
       <div class="grid">
         <div class="statBox">勝ち<strong id="wins">0</strong></div>
         <div class="statBox">負け<strong id="loses">0</strong></div>
         <div class="statBox">引き分け<strong id="draws">0</strong></div>
-        <div class="statBox">順守率<strong id="ruleRate">0%</strong></div>
+        <div class="statBox">勝率<strong id="winRate">0%</strong></div>
       </div>
       <h3>記録ログ</h3>
       <div id="log" class="small">まだ記録はありません。</div>
@@ -169,10 +159,13 @@
 
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
-    const STAT_STORAGE = "scalplayer_usdjpy_stats_v1";
+    const STAT_STORAGE = "scalplayer_usdjpy_stats_v1_1";
     let autoTimer = null;
     let autoEnabled = false;
-    let wins = 0, loses = 0, draws = 0, ruleTrades = 0, totalTrades = 0;
+    let soundAlertEnabled = false;
+    let audioContext = null;
+    let lastAlertJudge = "判定なし";
+    let wins = 0, loses = 0, draws = 0, totalTrades = 0;
     let lastJudgeOk = false;
     let lastJudgeText = "判定なし";
     let lastSnapshot = { price: "--", ema: "--", emaDir: "--", five: "--" };
@@ -303,6 +296,7 @@
         }
 
         lastJudgeText = judge;
+        maybeAlert(judge);
         lastSnapshot = { price: price.toFixed(3), ema: ema20.toFixed(3), emaDir: emaDir, five: five.text };
         renderAnalysis(price, ema20, emaDir, five.text, judge, cls, badges, reasons);
         const now = new Date();
@@ -347,31 +341,87 @@
       }
     }
 
+
+    function toggleSoundAlert() {
+      soundAlertEnabled = !soundAlertEnabled;
+      const btn = document.getElementById("alertBtn");
+      const status = document.getElementById("alertStatus");
+      if (soundAlertEnabled) {
+        unlockAudio();
+        btn.textContent = "音アラート OFF";
+        btn.className = "red";
+        status.textContent = "音アラート：ON。新しい買い優勢・売り優勢サインが出た時に音で知らせます。";
+        playAlertSound("test");
+      } else {
+        btn.textContent = "音アラート ON";
+        btn.className = "blue";
+        status.textContent = "音アラート：OFF。";
+      }
+    }
+
+    function unlockAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioContext) audioContext = new AudioCtx();
+        if (audioContext.state === "suspended") audioContext.resume();
+      } catch (e) {}
+    }
+
+    function playAlertSound(type) {
+      if (!soundAlertEnabled && type !== "test") return;
+      try {
+        unlockAudio();
+        if (!audioContext) return;
+        const now = audioContext.currentTime;
+        const freqs = type === "sell" ? [660, 440, 330] : type === "buy" ? [523, 659, 784] : [440, 660];
+        freqs.forEach((freq, i) => {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now + i * 0.16);
+          gain.gain.setValueAtTime(0.0001, now + i * 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.16 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.16 + 0.13);
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.start(now + i * 0.16);
+          osc.stop(now + i * 0.16 + 0.14);
+        });
+      } catch (e) {}
+    }
+
+    function maybeAlert(judge) {
+      if (!soundAlertEnabled) {
+        lastAlertJudge = judge;
+        return;
+      }
+      const isSignal = judge === "買い優勢" || judge === "売り優勢";
+      const isNewSignal = isSignal && judge !== lastAlertJudge;
+      if (isNewSignal) {
+        playAlertSound(judge === "買い優勢" ? "buy" : "sell");
+      }
+      lastAlertJudge = judge;
+    }
+
     function recordTrade() {
       const r = document.getElementById("tradeResult").value;
-      const rule = document.getElementById("ruleFollowed").value;
       if (r === "win") wins++;
       if (r === "lose") loses++;
       if (r === "draw") draws++;
       totalTrades++;
-      let followed = false;
-      if (rule === "yes") followed = true;
-      if (rule === "no") followed = false;
-      if (rule === "auto") followed = lastJudgeOk;
-      if (followed) ruleTrades++;
-      addLog(r, followed);
+      addLog(r);
       saveStats();
       updateStatsView();
     }
 
-    function addLog(result, followed) {
+    function addLog(result) {
       const log = document.getElementById("log");
       const now = new Date();
       const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け";
-      const followText = followed ? "守った" : "破った/見送り外";
       const item = document.createElement("div");
       item.className = "logItem";
-      item.textContent = `${now.toLocaleString()}｜${resultText}｜${followText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分EMA：${lastSnapshot.ema}｜5分足：${lastSnapshot.five}`;
+      item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分EMA：${lastSnapshot.ema}｜5分足：${lastSnapshot.five}`;
       if (log.textContent === "まだ記録はありません。") log.textContent = "";
       log.prepend(item);
     }
@@ -380,12 +430,13 @@
       document.getElementById("wins").textContent = wins;
       document.getElementById("loses").textContent = loses;
       document.getElementById("draws").textContent = draws;
-      const rate = totalTrades === 0 ? 0 : Math.round((ruleTrades / totalTrades) * 100);
-      document.getElementById("ruleRate").textContent = rate + "%";
+      const base = wins + loses;
+      const rate = base === 0 ? 0 : Math.round((wins / base) * 100);
+      document.getElementById("winRate").textContent = rate + "%";
     }
 
     function saveStats() {
-      localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, ruleTrades, totalTrades }));
+      localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, totalTrades }));
     }
 
     function loadStats() {
@@ -396,14 +447,13 @@
         wins = data.wins || 0;
         loses = data.loses || 0;
         draws = data.draws || 0;
-        ruleTrades = data.ruleTrades || 0;
         totalTrades = data.totalTrades || 0;
       } catch (e) {}
     }
 
     function resetStats() {
       if (!confirm("記録をリセットしますか？")) return;
-      wins = 0; loses = 0; draws = 0; ruleTrades = 0; totalTrades = 0;
+      wins = 0; loses = 0; draws = 0; totalTrades = 0;
       localStorage.removeItem(STAT_STORAGE);
       document.getElementById("log").textContent = "まだ記録はありません。";
       updateStatsView();
