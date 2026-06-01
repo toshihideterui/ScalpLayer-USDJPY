@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ScalpLayer USDJPY Ver.8</title>
+  <title>ScalpLayer USDJPY Ver.9</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -22,9 +22,7 @@
       --yellow: #facc15;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -35,26 +33,11 @@
       line-height: 1.7;
     }
 
-    .container {
-      max-width: 760px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      text-align: center;
-      padding: 12px 0 24px;
-    }
-
-    h1 {
-      font-size: 30px;
-      margin: 0 0 8px;
-      letter-spacing: .02em;
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 22px;
-    }
+    .container { max-width: 760px; margin: 0 auto; }
+    .hero { text-align: center; padding: 12px 0 24px; }
+    h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: .02em; }
+    h2 { margin-top: 0; font-size: 22px; }
+    h3 { margin-bottom: 10px; }
 
     .card {
       background: rgba(16, 24, 39, .95);
@@ -66,82 +49,32 @@
       overflow: hidden;
     }
 
-    .notice {
-      border: 1px solid rgba(250, 204, 21, .45);
-      background: rgba(250, 204, 21, .08);
-      color: #fde68a;
-    }
+    .notice { border: 1px solid rgba(250, 204, 21, .45); background: rgba(250, 204, 21, .08); color: #fde68a; }
+    .update { border: 1px solid rgba(74, 222, 128, .35); background: rgba(74, 222, 128, .08); color: #dcfce7; }
 
-    .update {
-      border: 1px solid rgba(74, 222, 128, .35);
-      background: rgba(74, 222, 128, .08);
-      color: #dcfce7;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      margin-top: 10px;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
+    label { display: block; color: var(--muted); margin-top: 10px; margin-bottom: 6px; font-weight: 600; }
 
     input, select, textarea, button {
-      width: 100%;
-      padding: 14px 16px;
-      margin: 0 0 16px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: var(--input);
-      color: var(--text);
-      font-size: 16px;
-      outline: none;
+      width: 100%; padding: 14px 16px; margin: 0 0 16px;
+      border-radius: 14px; border: 1px solid var(--border);
+      background: var(--input); color: var(--text); font-size: 16px; outline: none;
     }
 
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(74, 222, 128, .15);
-    }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74, 222, 128, .15); }
 
-    button {
-      border: none;
-      font-weight: 800;
-      cursor: pointer;
-      transition: transform .08s ease, opacity .2s ease;
-    }
-
-    button:active {
-      transform: translateY(1px);
-    }
-
+    button { border: none; font-weight: 800; cursor: pointer; transition: transform .08s ease, opacity .2s ease; }
+    button:active { transform: translateY(1px); }
     .green { background: var(--green); color: #052e16; }
     .red { background: var(--red); color: #fff; }
     .blue { background: var(--blue); color: #fff; }
 
-    .result {
-      font-size: 24px;
-      font-weight: 900;
-      padding: 18px;
-      border-radius: 18px;
-      text-align: center;
-      margin-top: 16px;
-    }
-
+    .result { font-size: 24px; font-weight: 900; padding: 18px; border-radius: 18px; text-align: center; margin-top: 16px; }
     .buy { background: var(--green-dark); color: #fff; }
     .sell { background: var(--red-dark); color: #fff; }
     .wait { background: var(--wait); color: #fff; }
 
-    .small {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .small { color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
     .statBox {
       background: rgba(2, 6, 23, .65);
@@ -151,10 +84,7 @@
       text-align: center;
     }
 
-    .statBox strong {
-      display: block;
-      font-size: 24px;
-    }
+    .statBox strong { display: block; font-size: 24px; }
 
     .logItem {
       background: rgba(2, 6, 23, .65);
@@ -164,6 +94,26 @@
       margin-bottom: 10px;
       color: var(--muted);
       font-size: 14px;
+    }
+
+    .autoPanel {
+      background: rgba(2, 6, 23, .45);
+      border: 1px solid rgba(148, 163, 184, .18);
+      border-radius: 18px;
+      padding: 16px;
+      margin: 10px 0 18px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(74, 222, 128, .15);
+      color: #bbf7d0;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-bottom: 6px;
     }
 
     @media (max-width: 640px) {
@@ -177,10 +127,8 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY Ver.8</h1>
-      <p class="small">
-        15分足で方向確認、5分足でエントリー判断。記録まで残す、ドル円スキャルピング練習ツールです。
-      </p>
+      <h1>ScalpLayer USDJPY Ver.9</h1>
+      <p class="small">USD/JPYの参考レートを取得し、直近価格の流れから15分足方向と5分足エントリー形を半自動判定します。</p>
     </section>
 
     <section class="card notice">
@@ -188,7 +136,7 @@
     </section>
 
     <section class="card update">
-      Ver.8追加：Frankfurter APIを廃止し、ExchangeRate APIでUSD/JPYを取得します。取得失敗時はこれまで通り手入力で使えます。
+      Ver.9追加：現在値取得後、直近価格履歴から15分足20EMAの目安、EMA方向、5分足の形、エントリー判定を半自動で更新します。
     </section>
 
     <section class="card">
@@ -197,18 +145,27 @@
       <label for="price">現在価格</label>
       <input id="price" type="number" step="0.001" placeholder="例：157.250" />
 
-      <button class="green" onclick="fetchRate()">USD/JPY現在値を取得</button>
-      <button class="blue" onclick="startAutoFetch()">30秒ごとに自動取得</button>
+      <button class="green" onclick="fetchRate(true)">USD/JPY現在値を取得して自動判定</button>
+      <button class="blue" onclick="startAutoFetch()">30秒ごとに自動取得・自動判定</button>
       <button class="red" onclick="stopAutoFetch()">自動取得停止</button>
 
-      <p id="rateStatus" class="small">ExchangeRate APIから取得します。</p>
+      <p id="rateStatus" class="small">ExchangeRate APIから参考レートを取得します。</p>
+
+      <div class="autoPanel">
+        <div>
+          <span class="badge">半自動判定</span>
+          <span class="badge">価格履歴保存</span>
+          <span class="badge">手入力も可能</span>
+        </div>
+        <p id="autoSummary" class="small">価格を取得すると、ここに自動判定の概要が表示されます。</p>
+      </div>
     </section>
 
     <section class="card">
       <h2>② 15分足方向確認</h2>
 
       <label for="ema15">15分足 20EMA</label>
-      <input id="ema15" type="number" step="0.001" placeholder="例：157.180" />
+      <input id="ema15" type="number" step="0.001" placeholder="自動入力されます。手入力も可" />
 
       <label for="emaDirection">15分足 EMAの向き</label>
       <select id="emaDirection">
@@ -216,6 +173,9 @@
         <option value="down">下向き</option>
         <option value="flat">横ばい</option>
       </select>
+
+      <button class="blue" onclick="autoAnalyzeFromManualPrice()">手入力価格から自動判定</button>
+      <p class="small">※本物のローソク足データではなく、アプリ内に保存した直近価格の流れから判定する簡易版です。</p>
     </section>
 
     <section class="card">
@@ -258,6 +218,7 @@
 
       <button class="blue" onclick="recordTrade()">記録する</button>
       <button class="red" onclick="resetStats()">記録をリセット</button>
+      <button class="red" onclick="resetPriceHistory()">価格履歴をリセット</button>
 
       <div class="grid">
         <div class="statBox">勝ち<strong id="wins">0</strong></div>
@@ -280,13 +241,16 @@
     let totalTrades = 0;
     let lastJudgeOk = false;
     let lastJudgeText = "判定なし";
+    let priceHistory = [];
 
     window.addEventListener("load", () => {
       loadStats();
+      loadPriceHistory();
       updateStatsView();
+      updateAutoSummary();
     });
 
-    async function fetchRate() {
+    async function fetchRate(runAutoJudge = true) {
       const status = document.getElementById("rateStatus");
       status.textContent = "取得中...";
 
@@ -301,6 +265,12 @@
         const rate = Number(data.rates.JPY).toFixed(3);
         document.getElementById("price").value = rate;
         status.textContent = "取得成功：ExchangeRate API / USDJPY = " + rate;
+
+        if (runAutoJudge) {
+          pushPriceHistory(Number(rate));
+          autoAnalyze();
+          judgeEntry();
+        }
       } catch (e) {
         console.error(e);
         status.textContent = "取得失敗：通信エラー。手入力で利用できます。";
@@ -309,9 +279,9 @@
 
     function startAutoFetch() {
       stopAutoFetch();
-      fetchRate();
-      autoTimer = setInterval(fetchRate, 30000);
-      document.getElementById("rateStatus").textContent = "30秒ごとに自動取得中...";
+      fetchRate(true);
+      autoTimer = setInterval(() => fetchRate(true), 30000);
+      document.getElementById("rateStatus").textContent = "30秒ごとに自動取得・自動判定中...";
     }
 
     function stopAutoFetch() {
@@ -320,6 +290,98 @@
         autoTimer = null;
         document.getElementById("rateStatus").textContent = "自動取得を停止しました。";
       }
+    }
+
+    function autoAnalyzeFromManualPrice() {
+      const price = Number(document.getElementById("price").value);
+      if (!price) {
+        document.getElementById("autoSummary").textContent = "現在価格を入力してください。";
+        return;
+      }
+      pushPriceHistory(price);
+      autoAnalyze();
+      judgeEntry();
+    }
+
+    function pushPriceHistory(price) {
+      if (!price) return;
+      priceHistory.push({ price, time: new Date().toISOString() });
+      if (priceHistory.length > 30) priceHistory = priceHistory.slice(-30);
+      localStorage.setItem("scalplayer_usdjpy_price_history_v9", JSON.stringify(priceHistory));
+    }
+
+    function loadPriceHistory() {
+      try {
+        const raw = localStorage.getItem("scalplayer_usdjpy_price_history_v9");
+        if (!raw) return;
+        priceHistory = JSON.parse(raw) || [];
+      } catch (e) {
+        priceHistory = [];
+      }
+    }
+
+    function calcSimpleEma(values, period = 20) {
+      if (values.length === 0) return 0;
+      const k = 2 / (period + 1);
+      let ema = values[0];
+      for (let i = 1; i < values.length; i++) {
+        ema = values[i] * k + ema * (1 - k);
+      }
+      return ema;
+    }
+
+    function autoAnalyze() {
+      const prices = priceHistory.map(item => Number(item.price)).filter(Boolean);
+      const price = Number(document.getElementById("price").value);
+      const summary = document.getElementById("autoSummary");
+
+      if (!price || prices.length < 2) {
+        summary.textContent = "価格履歴がまだ少ないため、現在価格を基準に横ばい判定にしています。数回取得すると精度が上がります。";
+        document.getElementById("ema15").value = price ? price.toFixed(3) : "";
+        document.getElementById("emaDirection").value = "flat";
+        document.getElementById("candleSignal").value = "none";
+        return;
+      }
+
+      const ema = calcSimpleEma(prices, Math.min(20, prices.length));
+      const last = prices[prices.length - 1];
+      const prev = prices[prices.length - 2];
+      const recent = prices.slice(-5);
+      const firstRecent = recent[0];
+      const diff = last - firstRecent;
+      const lastDiff = last - prev;
+      const threshold = 0.015;
+
+      document.getElementById("ema15").value = ema.toFixed(3);
+
+      let direction = "flat";
+      let candle = "none";
+
+      if (diff > threshold && last >= ema) {
+        direction = "up";
+        candle = lastDiff >= 0 ? "buy" : "none";
+      } else if (diff < -threshold && last <= ema) {
+        direction = "down";
+        candle = lastDiff <= 0 ? "sell" : "none";
+      }
+
+      document.getElementById("emaDirection").value = direction;
+      document.getElementById("candleSignal").value = candle;
+
+      const directionText = direction === "up" ? "上向き" : direction === "down" ? "下向き" : "横ばい";
+      const candleText = candle === "buy" ? "買い形" : candle === "sell" ? "売り形" : "まだ形なし";
+
+      summary.textContent = `価格履歴${prices.length}件から簡易判定：EMA目安 ${ema.toFixed(3)} / 方向 ${directionText} / 5分足 ${candleText}`;
+    }
+
+    function updateAutoSummary() {
+      const summary = document.getElementById("autoSummary");
+      if (!priceHistory.length) {
+        summary.textContent = "価格を取得すると、ここに自動判定の概要が表示されます。";
+        return;
+      }
+      const last = priceHistory[priceHistory.length - 1];
+      summary.textContent = `保存済み価格履歴：${priceHistory.length}件 / 最終価格：${Number(last.price).toFixed(3)}`;
     }
 
     function judgeEntry() {
@@ -413,12 +475,12 @@
 
     function saveStats() {
       const data = { wins, loses, draws, ruleTrades, totalTrades };
-      localStorage.setItem("scalplayer_usdjpy_stats_v8", JSON.stringify(data));
+      localStorage.setItem("scalplayer_usdjpy_stats_v9", JSON.stringify(data));
     }
 
     function loadStats() {
       try {
-        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v8");
+        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v9");
         if (!raw) return;
         const data = JSON.parse(raw);
         wins = data.wins || 0;
@@ -436,9 +498,22 @@
       draws = 0;
       ruleTrades = 0;
       totalTrades = 0;
-      localStorage.removeItem("scalplayer_usdjpy_stats_v8");
+      localStorage.removeItem("scalplayer_usdjpy_stats_v9");
       document.getElementById("log").textContent = "まだ記録はありません。";
       updateStatsView();
+    }
+
+    function resetPriceHistory() {
+      if (!confirm("価格履歴をリセットしますか？")) return;
+      priceHistory = [];
+      localStorage.removeItem("scalplayer_usdjpy_price_history_v9");
+      document.getElementById("autoSummary").textContent = "価格履歴をリセットしました。";
+      document.getElementById("ema15").value = "";
+      document.getElementById("emaDirection").value = "flat";
+      document.getElementById("candleSignal").value = "none";
+      document.getElementById("result").textContent = "判定待ち";
+      document.getElementById("result").className = "result wait";
+      document.getElementById("reason").textContent = "";
     }
   </script>
 </body>
