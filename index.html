@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ScalpLayer USDJPY Ver.9</title>
+  <title>ScalpLayer USDJPY Ver.10</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -99,22 +99,23 @@
     .autoPanel {
       background: rgba(2, 6, 23, .45);
       border: 1px solid rgba(148, 163, 184, .18);
-      border-radius: 18px;
-      padding: 16px;
-      margin: 10px 0 18px;
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 8px;
     }
 
     .badge {
       display: inline-block;
-      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #052e16;
+      background: var(--green);
       border-radius: 999px;
-      background: rgba(74, 222, 128, .15);
-      color: #bbf7d0;
-      font-size: 13px;
-      font-weight: 700;
-      margin-right: 6px;
-      margin-bottom: 6px;
+      padding: 4px 10px;
+      margin: 0 6px 8px 0;
     }
+
+    .badge.yellow { background: var(--yellow); color: #422006; }
 
     @media (max-width: 640px) {
       body { padding: 14px; }
@@ -127,8 +128,8 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY Ver.9</h1>
-      <p class="small">USD/JPYの参考レートを取得し、直近価格の流れから15分足方向と5分足エントリー形を半自動判定します。</p>
+      <h1>ScalpLayer USDJPY Ver.10</h1>
+      <p class="small">TwelveData APIキーを入れると、USD/JPYの15分足と5分足を取得して自動判定します。</p>
     </section>
 
     <section class="card notice">
@@ -136,36 +137,46 @@
     </section>
 
     <section class="card update">
-      Ver.9追加：現在値取得後、直近価格履歴から15分足20EMAの目安、EMA方向、5分足の形、エントリー判定を半自動で更新します。
+      Ver.10追加：TwelveData APIキー入力欄を追加。15分足データから20EMAとEMA方向、5分足データからローソク足の形を自動判定します。APIキー未入力時はExchangeRate APIの参考レート取得だけ使えます。
     </section>
 
     <section class="card">
-      <h2>① USD/JPY 現在値取得</h2>
+      <h2>① APIキー設定</h2>
+      <label for="tdKey">TwelveData APIキー</label>
+      <input id="tdKey" type="password" placeholder="あとで取得したAPIキーをここに入力" />
+      <button class="blue" onclick="saveApiKey()">APIキーを保存</button>
+      <button class="red" onclick="clearApiKey()">APIキーを削除</button>
+      <p id="keyStatus" class="small">APIキーを入力すると、15分足・5分足の自動判定が使えます。</p>
+    </section>
+
+    <section class="card">
+      <h2>② USD/JPY データ取得</h2>
 
       <label for="price">現在価格</label>
       <input id="price" type="number" step="0.001" placeholder="例：157.250" />
 
-      <button class="green" onclick="fetchRate(true)">USD/JPY現在値を取得して自動判定</button>
-      <button class="blue" onclick="startAutoFetch()">30秒ごとに自動取得・自動判定</button>
+      <button class="green" onclick="fetchTwelveDataAndJudge()">15分足・5分足を取得して自動判定</button>
+      <button class="blue" onclick="fetchReferenceRate(false)">参考レートだけ取得</button>
+      <button class="blue" onclick="startAutoFetch()">60秒ごとに自動取得・自動判定</button>
       <button class="red" onclick="stopAutoFetch()">自動取得停止</button>
 
-      <p id="rateStatus" class="small">ExchangeRate APIから参考レートを取得します。</p>
+      <p id="rateStatus" class="small">TwelveData APIキーがある場合はローソク足データを取得します。</p>
 
       <div class="autoPanel">
         <div>
-          <span class="badge">半自動判定</span>
-          <span class="badge">価格履歴保存</span>
-          <span class="badge">手入力も可能</span>
+          <span class="badge">15分足20EMA</span>
+          <span class="badge">5分足ローソク足</span>
+          <span class="badge yellow">APIキー式</span>
         </div>
-        <p id="autoSummary" class="small">価格を取得すると、ここに自動判定の概要が表示されます。</p>
+        <p id="autoSummary" class="small">データを取得すると、ここに自動判定の概要が表示されます。</p>
       </div>
     </section>
 
     <section class="card">
-      <h2>② 15分足方向確認</h2>
+      <h2>③ 15分足方向確認</h2>
 
       <label for="ema15">15分足 20EMA</label>
-      <input id="ema15" type="number" step="0.001" placeholder="自動入力されます。手入力も可" />
+      <input id="ema15" type="number" step="0.001" placeholder="TwelveDataから自動計算。手入力も可" />
 
       <label for="emaDirection">15分足 EMAの向き</label>
       <select id="emaDirection">
@@ -174,12 +185,12 @@
         <option value="flat">横ばい</option>
       </select>
 
-      <button class="blue" onclick="autoAnalyzeFromManualPrice()">手入力価格から自動判定</button>
-      <p class="small">※本物のローソク足データではなく、アプリ内に保存した直近価格の流れから判定する簡易版です。</p>
+      <button class="blue" onclick="judgeEntry()">手入力内容で判定</button>
+      <p class="small">※15分足の終値データから20EMAを計算し、最新EMAと1本前EMAを比べて方向を判定します。</p>
     </section>
 
     <section class="card">
-      <h2>③ 5分足エントリー確認</h2>
+      <h2>④ 5分足エントリー確認</h2>
 
       <label for="candleSignal">5分足の形</label>
       <select id="candleSignal">
@@ -195,7 +206,7 @@
     </section>
 
     <section class="card">
-      <h2>④ トレード記録</h2>
+      <h2>⑤ トレード記録</h2>
 
       <div class="grid">
         <div>
@@ -218,7 +229,6 @@
 
       <button class="blue" onclick="recordTrade()">記録する</button>
       <button class="red" onclick="resetStats()">記録をリセット</button>
-      <button class="red" onclick="resetPriceHistory()">価格履歴をリセット</button>
 
       <div class="grid">
         <div class="statBox">勝ち<strong id="wins">0</strong></div>
@@ -241,18 +251,87 @@
     let totalTrades = 0;
     let lastJudgeOk = false;
     let lastJudgeText = "判定なし";
-    let priceHistory = [];
+
+    const STORAGE_KEY_STATS = "scalplayer_usdjpy_stats_v10";
+    const STORAGE_KEY_API = "scalplayer_twelvedata_api_key_v10";
 
     window.addEventListener("load", () => {
       loadStats();
-      loadPriceHistory();
+      loadApiKey();
       updateStatsView();
-      updateAutoSummary();
     });
 
-    async function fetchRate(runAutoJudge = true) {
+    function saveApiKey() {
+      const key = document.getElementById("tdKey").value.trim();
+      const status = document.getElementById("keyStatus");
+      if (!key) {
+        status.textContent = "APIキーが空です。TwelveDataのキーを入力してください。";
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_API, key);
+      status.textContent = "APIキーを保存しました。15分足・5分足の自動判定が使えます。";
+    }
+
+    function loadApiKey() {
+      const key = localStorage.getItem(STORAGE_KEY_API) || "";
+      if (key) {
+        document.getElementById("tdKey").value = key;
+        document.getElementById("keyStatus").textContent = "保存済みAPIキーがあります。";
+      }
+    }
+
+    function getApiKey() {
+      return document.getElementById("tdKey").value.trim() || localStorage.getItem(STORAGE_KEY_API) || "";
+    }
+
+    function clearApiKey() {
+      localStorage.removeItem(STORAGE_KEY_API);
+      document.getElementById("tdKey").value = "";
+      document.getElementById("keyStatus").textContent = "APIキーを削除しました。";
+    }
+
+    async function fetchTwelveDataAndJudge() {
+      const key = getApiKey();
       const status = document.getElementById("rateStatus");
-      status.textContent = "取得中...";
+      const summary = document.getElementById("autoSummary");
+
+      if (!key) {
+        status.textContent = "TwelveData APIキーが未入力です。参考レートだけ取得します。";
+        await fetchReferenceRate(false);
+        return;
+      }
+
+      status.textContent = "TwelveDataから15分足・5分足を取得中...";
+      summary.textContent = "ローソク足データを解析中...";
+
+      try {
+        const url15 = `https://api.twelvedata.com/time_series?symbol=USD/JPY&interval=15min&outputsize=30&apikey=${encodeURIComponent(key)}`;
+        const url5 = `https://api.twelvedata.com/time_series?symbol=USD/JPY&interval=5min&outputsize=5&apikey=${encodeURIComponent(key)}`;
+
+        const [res15, res5] = await Promise.all([fetch(url15), fetch(url5)]);
+        const data15 = await res15.json();
+        const data5 = await res5.json();
+
+        if (data15.status === "error") throw new Error(data15.message || "15分足データ取得エラー");
+        if (data5.status === "error") throw new Error(data5.message || "5分足データ取得エラー");
+        if (!data15.values || data15.values.length < 21) throw new Error("15分足データが足りません。少し時間を置くか、APIキーを確認してください。");
+        if (!data5.values || data5.values.length < 2) throw new Error("5分足データが足りません。少し時間を置いてください。");
+
+        analyzeFifteenMinute(data15.values);
+        analyzeFiveMinute(data5.values);
+        judgeEntry();
+
+        status.textContent = "取得成功：TwelveData / 15分足・5分足を自動判定しました。";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "取得失敗：" + e.message;
+        summary.textContent = "APIキー、無料枠の制限、通信状態を確認してください。手入力判定は使えます。";
+      }
+    }
+
+    async function fetchReferenceRate(runJudge = false) {
+      const status = document.getElementById("rateStatus");
+      status.textContent = "参考レート取得中...";
 
       try {
         const res = await fetch("https://open.er-api.com/v6/latest/USD");
@@ -264,13 +343,9 @@
 
         const rate = Number(data.rates.JPY).toFixed(3);
         document.getElementById("price").value = rate;
-        status.textContent = "取得成功：ExchangeRate API / USDJPY = " + rate;
-
-        if (runAutoJudge) {
-          pushPriceHistory(Number(rate));
-          autoAnalyze();
-          judgeEntry();
-        }
+        status.textContent = "取得成功：ExchangeRate API / 参考USDJPY = " + rate;
+        document.getElementById("autoSummary").textContent = "参考レートのみ取得しました。15分足・5分足判定にはTwelveData APIキーが必要です。";
+        if (runJudge) judgeEntry();
       } catch (e) {
         console.error(e);
         status.textContent = "取得失敗：通信エラー。手入力で利用できます。";
@@ -279,9 +354,9 @@
 
     function startAutoFetch() {
       stopAutoFetch();
-      fetchRate(true);
-      autoTimer = setInterval(() => fetchRate(true), 30000);
-      document.getElementById("rateStatus").textContent = "30秒ごとに自動取得・自動判定中...";
+      fetchTwelveDataAndJudge();
+      autoTimer = setInterval(fetchTwelveDataAndJudge, 60000);
+      document.getElementById("rateStatus").textContent = "60秒ごとに自動取得・自動判定中...";
     }
 
     function stopAutoFetch() {
@@ -292,96 +367,65 @@
       }
     }
 
-    function autoAnalyzeFromManualPrice() {
-      const price = Number(document.getElementById("price").value);
-      if (!price) {
-        document.getElementById("autoSummary").textContent = "現在価格を入力してください。";
-        return;
-      }
-      pushPriceHistory(price);
-      autoAnalyze();
-      judgeEntry();
+    function toNumber(value) {
+      return Number.parseFloat(value);
     }
 
-    function pushPriceHistory(price) {
-      if (!price) return;
-      priceHistory.push({ price, time: new Date().toISOString() });
-      if (priceHistory.length > 30) priceHistory = priceHistory.slice(-30);
-      localStorage.setItem("scalplayer_usdjpy_price_history_v9", JSON.stringify(priceHistory));
-    }
-
-    function loadPriceHistory() {
-      try {
-        const raw = localStorage.getItem("scalplayer_usdjpy_price_history_v9");
-        if (!raw) return;
-        priceHistory = JSON.parse(raw) || [];
-      } catch (e) {
-        priceHistory = [];
-      }
-    }
-
-    function calcSimpleEma(values, period = 20) {
-      if (values.length === 0) return 0;
+    function calcEmaSeries(values, period = 20) {
       const k = 2 / (period + 1);
+      const result = [];
       let ema = values[0];
+      result.push(ema);
       for (let i = 1; i < values.length; i++) {
         ema = values[i] * k + ema * (1 - k);
+        result.push(ema);
       }
-      return ema;
+      return result;
     }
 
-    function autoAnalyze() {
-      const prices = priceHistory.map(item => Number(item.price)).filter(Boolean);
-      const price = Number(document.getElementById("price").value);
-      const summary = document.getElementById("autoSummary");
+    function analyzeFifteenMinute(rawValues) {
+      const values = [...rawValues].reverse();
+      const closes = values.map(v => toNumber(v.close)).filter(Boolean);
+      const emaSeries = calcEmaSeries(closes, 20);
+      const emaLatest = emaSeries[emaSeries.length - 1];
+      const emaPrev = emaSeries[emaSeries.length - 2];
+      const latestClose = closes[closes.length - 1];
+      const diff = emaLatest - emaPrev;
+      const threshold = 0.003;
 
-      if (!price || prices.length < 2) {
-        summary.textContent = "価格履歴がまだ少ないため、現在価格を基準に横ばい判定にしています。数回取得すると精度が上がります。";
-        document.getElementById("ema15").value = price ? price.toFixed(3) : "";
-        document.getElementById("emaDirection").value = "flat";
-        document.getElementById("candleSignal").value = "none";
-        return;
-      }
-
-      const ema = calcSimpleEma(prices, Math.min(20, prices.length));
-      const last = prices[prices.length - 1];
-      const prev = prices[prices.length - 2];
-      const recent = prices.slice(-5);
-      const firstRecent = recent[0];
-      const diff = last - firstRecent;
-      const lastDiff = last - prev;
-      const threshold = 0.015;
-
-      document.getElementById("ema15").value = ema.toFixed(3);
+      document.getElementById("price").value = latestClose.toFixed(3);
+      document.getElementById("ema15").value = emaLatest.toFixed(3);
 
       let direction = "flat";
-      let candle = "none";
-
-      if (diff > threshold && last >= ema) {
-        direction = "up";
-        candle = lastDiff >= 0 ? "buy" : "none";
-      } else if (diff < -threshold && last <= ema) {
-        direction = "down";
-        candle = lastDiff <= 0 ? "sell" : "none";
-      }
+      if (diff > threshold && latestClose >= emaLatest) direction = "up";
+      if (diff < -threshold && latestClose <= emaLatest) direction = "down";
 
       document.getElementById("emaDirection").value = direction;
-      document.getElementById("candleSignal").value = candle;
-
-      const directionText = direction === "up" ? "上向き" : direction === "down" ? "下向き" : "横ばい";
-      const candleText = candle === "buy" ? "買い形" : candle === "sell" ? "売り形" : "まだ形なし";
-
-      summary.textContent = `価格履歴${prices.length}件から簡易判定：EMA目安 ${ema.toFixed(3)} / 方向 ${directionText} / 5分足 ${candleText}`;
     }
 
-    function updateAutoSummary() {
-      const summary = document.getElementById("autoSummary");
-      if (!priceHistory.length) {
-        summary.textContent = "価格を取得すると、ここに自動判定の概要が表示されます。";
-        return;
-      }
-      const last = priceHistory[priceHistory.length - 1];
-      summary.textContent = `保存済み価格履歴：${priceHistory.length}件 / 最終価格：${Number(last.price).toFixed(3)}`;
+    function analyzeFiveMinute(rawValues) {
+      const latest = rawValues[0];
+      const prev = rawValues[1];
+      const open = toNumber(latest.open);
+      const close = toNumber(latest.close);
+      const prevClose = toNumber(prev.close);
+      const prevHigh = toNumber(prev.high);
+      const prevLow = toNumber(prev.low);
+
+      let candle = "none";
+      if (close > open && close >= prevClose) candle = "buy";
+      if (close < open && close <= prevClose) candle = "sell";
+
+      document.getElementById("candleSignal").value = candle;
+
+      const direction = document.getElementById("emaDirection").value;
+      const ema = document.getElementById("ema15").value;
+      const directionText = direction === "up" ? "上向き" : direction === "down" ? "下向き" : "横ばい";
+      const candleText = candle === "buy" ? "買い形" : candle === "sell" ? "売り形" : "まだ形なし";
+      const breakText = close > prevHigh ? "前回高値を上抜け" : close < prevLow ? "前回安値を下抜け" : "前回足の範囲内";
+
+      document.getElementById("autoSummary").textContent =
+        `15分足20EMA ${ema} / EMA方向 ${directionText} / 5分足 ${candleText} / ${breakText}`;
     }
 
     function judgeEntry() {
@@ -398,7 +442,7 @@
 
       if (!price || !ema15) {
         result.textContent = "入力不足";
-        reason.textContent = "現在価格と15分足20EMAを入力してください。";
+        reason.textContent = "現在価格と15分足20EMAを入力してください。TwelveData APIキーがあれば自動入力されます。";
         lastJudgeText = "入力不足";
         return;
       }
@@ -406,7 +450,7 @@
       if (price > ema15 && emaDirection === "up" && candleSignal === "buy") {
         result.textContent = "買い優勢";
         result.className = "result buy";
-        reason.textContent = "現在価格が15分足EMAより上、EMA上向き、5分足も買い形です。";
+        reason.textContent = "15分足は価格が20EMAより上、EMA上向き。5分足も買い形です。";
         lastJudgeOk = true;
         lastJudgeText = "買い優勢";
         return;
@@ -415,7 +459,7 @@
       if (price < ema15 && emaDirection === "down" && candleSignal === "sell") {
         result.textContent = "売り優勢";
         result.className = "result sell";
-        reason.textContent = "現在価格が15分足EMAより下、EMA下向き、5分足も売り形です。";
+        reason.textContent = "15分足は価格が20EMAより下、EMA下向き。5分足も売り形です。";
         lastJudgeOk = true;
         lastJudgeText = "売り優勢";
         return;
@@ -475,12 +519,12 @@
 
     function saveStats() {
       const data = { wins, loses, draws, ruleTrades, totalTrades };
-      localStorage.setItem("scalplayer_usdjpy_stats_v9", JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(data));
     }
 
     function loadStats() {
       try {
-        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v9");
+        const raw = localStorage.getItem(STORAGE_KEY_STATS);
         if (!raw) return;
         const data = JSON.parse(raw);
         wins = data.wins || 0;
@@ -498,22 +542,9 @@
       draws = 0;
       ruleTrades = 0;
       totalTrades = 0;
-      localStorage.removeItem("scalplayer_usdjpy_stats_v9");
+      localStorage.removeItem(STORAGE_KEY_STATS);
       document.getElementById("log").textContent = "まだ記録はありません。";
       updateStatsView();
-    }
-
-    function resetPriceHistory() {
-      if (!confirm("価格履歴をリセットしますか？")) return;
-      priceHistory = [];
-      localStorage.removeItem("scalplayer_usdjpy_price_history_v9");
-      document.getElementById("autoSummary").textContent = "価格履歴をリセットしました。";
-      document.getElementById("ema15").value = "";
-      document.getElementById("emaDirection").value = "flat";
-      document.getElementById("candleSignal").value = "none";
-      document.getElementById("result").textContent = "判定待ち";
-      document.getElementById("result").className = "result wait";
-      document.getElementById("reason").textContent = "";
     }
   </script>
 </body>
