@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ScalpLayer USDJPY Ver.7</title>
+  <title>ScalpLayer USDJPY Ver.8</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -177,7 +177,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY Ver.7</h1>
+      <h1>ScalpLayer USDJPY Ver.8</h1>
       <p class="small">
         15分足で方向確認、5分足でエントリー判断。記録まで残す、ドル円スキャルピング練習ツールです。
       </p>
@@ -188,7 +188,7 @@
     </section>
 
     <section class="card update">
-      Ver.7追加：FreeForexAPIを廃止し、Frankfurter APIでUSD/JPYを取得します。取得失敗時はこれまで通り手入力で使えます。
+      Ver.8追加：Frankfurter APIを廃止し、ExchangeRate APIでUSD/JPYを取得します。取得失敗時はこれまで通り手入力で使えます。
     </section>
 
     <section class="card">
@@ -201,7 +201,7 @@
       <button class="blue" onclick="startAutoFetch()">30秒ごとに自動取得</button>
       <button class="red" onclick="stopAutoFetch()">自動取得停止</button>
 
-      <p id="rateStatus" class="small">Frankfurter APIから取得します。</p>
+      <p id="rateStatus" class="small">ExchangeRate APIから取得します。</p>
     </section>
 
     <section class="card">
@@ -291,7 +291,7 @@
       status.textContent = "取得中...";
 
       try {
-        const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=JPY");
+        const res = await fetch("https://open.er-api.com/v6/latest/USD");
         const data = await res.json();
 
         if (!data || !data.rates || !data.rates.JPY) {
@@ -300,9 +300,10 @@
 
         const rate = Number(data.rates.JPY).toFixed(3);
         document.getElementById("price").value = rate;
-        status.textContent = "取得成功：Frankfurter API / USDJPY = " + rate;
+        status.textContent = "取得成功：ExchangeRate API / USDJPY = " + rate;
       } catch (e) {
-        status.textContent = "取得失敗：API停止・通信エラーの可能性があります。手入力で使えます。";
+        console.error(e);
+        status.textContent = "取得失敗：通信エラー。手入力で利用できます。";
       }
     }
 
@@ -412,12 +413,12 @@
 
     function saveStats() {
       const data = { wins, loses, draws, ruleTrades, totalTrades };
-      localStorage.setItem("scalplayer_usdjpy_stats_v7", JSON.stringify(data));
+      localStorage.setItem("scalplayer_usdjpy_stats_v8", JSON.stringify(data));
     }
 
     function loadStats() {
       try {
-        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v7");
+        const raw = localStorage.getItem("scalplayer_usdjpy_stats_v8");
         if (!raw) return;
         const data = JSON.parse(raw);
         wins = data.wins || 0;
@@ -435,7 +436,7 @@
       draws = 0;
       ruleTrades = 0;
       totalTrades = 0;
-      localStorage.removeItem("scalplayer_usdjpy_stats_v7");
+      localStorage.removeItem("scalplayer_usdjpy_stats_v8");
       document.getElementById("log").textContent = "まだ記録はありません。";
       updateStatsView();
     }
