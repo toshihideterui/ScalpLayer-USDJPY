@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.1</title>
+  <title>ScalpLayer USDJPY v1.2</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -92,7 +92,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.1</h1>
+      <h1>ScalpLayer USDJPY v1.2</h1>
       <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
     </section>
 
@@ -101,7 +101,7 @@
     </section>
 
     <section class="card update">
-      v1.1：トレード記録からルール順守を撤去し、買い優勢・売り優勢サイン発生時の音アラートを追加しました。
+      v1.2：自動分析・音アラートのON/OFF表示を修正しました。緑はON、赤はOFFです。
     </section>
 
     <section class="card">
@@ -115,9 +115,9 @@
     <section class="card">
       <h2>② 自動分析</h2>
       <button class="green" onclick="runAnalysis()">USD/JPYを自動分析</button>
-      <button id="autoBtn" class="blue" onclick="toggleAutoAnalysis()">5分ごと自動分析 ON</button>
-      <button id="alertBtn" class="blue" onclick="toggleSoundAlert()">音アラート ON</button>
-      <p id="alertStatus" class="small">音アラート：OFF。ONにすると買い優勢・売り優勢が新しく出た時に音で知らせます。</p>
+      <button id="autoBtn" class="red" onclick="toggleAutoAnalysis()">5分ごと自動分析 OFF</button>
+      <button id="alertBtn" class="red" onclick="toggleSoundAlert()">音アラート OFF</button>
+      <p id="alertStatus" class="small">音アラート：OFF。買い優勢・売り優勢サインが出た時に音で知らせたい場合はONにしてください。</p>
       <p id="status" class="small">待機中です。</p>
       <p id="lastTime" class="small">最終分析：未実行</p>
     </section>
@@ -178,6 +178,8 @@
       }
       loadStats();
       updateStatsView();
+      updateAutoButtonView();
+      updateAlertButtonView();
     });
 
     function saveApiKey() {
@@ -325,37 +327,51 @@
       document.getElementById("reasons").innerHTML = reasons.map(r => `<li>${escapeHtml(r)}</li>`).join("");
     }
 
-    function toggleAutoAnalysis() {
-      autoEnabled = !autoEnabled;
+    function updateAutoButtonView() {
       const btn = document.getElementById("autoBtn");
       if (autoEnabled) {
-        runAnalysis();
-        autoTimer = setInterval(runAnalysis, 5 * 60 * 1000);
+        btn.textContent = "5分ごと自動分析 ON";
+        btn.className = "green";
+      } else {
         btn.textContent = "5分ごと自動分析 OFF";
         btn.className = "red";
-      } else {
-        if (autoTimer) clearInterval(autoTimer);
-        autoTimer = null;
-        btn.textContent = "5分ごと自動分析 ON";
-        btn.className = "blue";
       }
     }
 
-
-    function toggleSoundAlert() {
-      soundAlertEnabled = !soundAlertEnabled;
+    function updateAlertButtonView() {
       const btn = document.getElementById("alertBtn");
       const status = document.getElementById("alertStatus");
       if (soundAlertEnabled) {
-        unlockAudio();
+        btn.textContent = "音アラート ON";
+        btn.className = "green";
+        status.textContent = "音アラート：ON。新しい買い優勢・売り優勢サインが出た時に音で知らせます。";
+      } else {
         btn.textContent = "音アラート OFF";
         btn.className = "red";
-        status.textContent = "音アラート：ON。新しい買い優勢・売り優勢サインが出た時に音で知らせます。";
+        status.textContent = "音アラート：OFF。買い優勢・売り優勢サインが出た時に音で知らせたい場合はONにしてください。";
+      }
+    }
+
+    function toggleAutoAnalysis() {
+      autoEnabled = !autoEnabled;
+      if (autoEnabled) {
+        runAnalysis();
+        autoTimer = setInterval(runAnalysis, 5 * 60 * 1000);
+      } else {
+        if (autoTimer) clearInterval(autoTimer);
+        autoTimer = null;
+      }
+      updateAutoButtonView();
+    }
+
+    function toggleSoundAlert() {
+      soundAlertEnabled = !soundAlertEnabled;
+      if (soundAlertEnabled) {
+        unlockAudio();
+        updateAlertButtonView();
         playAlertSound("test");
       } else {
-        btn.textContent = "音アラート ON";
-        btn.className = "blue";
-        status.textContent = "音アラート：OFF。";
+        updateAlertButtonView();
       }
     }
 
