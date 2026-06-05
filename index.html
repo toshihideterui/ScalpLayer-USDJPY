@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.2</title>
+  <title>ScalpLayer USDJPY v1.3</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -92,7 +92,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.2</h1>
+      <h1>ScalpLayer USDJPY v1.3</h1>
       <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
     </section>
 
@@ -101,7 +101,7 @@
     </section>
 
     <section class="card update">
-      v1.2：自動分析・音アラートのON/OFF表示を修正しました。緑はON、赤はOFFです。
+      v1.3：5分足は未確定足を使わず、1本前の確定足で判定するようにしました。ダマシを減らすための安定化版です。
     </section>
 
     <section class="card">
@@ -128,7 +128,7 @@
         <div class="statBox">現在価格<strong id="currentPrice">--</strong></div>
         <div class="statBox">15分足20EMA<strong id="ema20View">--</strong></div>
         <div class="statBox">15分足EMA向き<strong id="emaDirView">--</strong></div>
-        <div class="statBox">5分足の形<strong id="fiveSignalView">--</strong></div>
+        <div class="statBox">5分足の形<br><span class="small">確定足</span><strong id="fiveSignalView">--</strong></div>
       </div>
       <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
@@ -225,25 +225,27 @@
     }
 
     function analyzeFiveMinute(values) {
-      const latest = values[0];
-      const prev = values[1];
-      const prev2 = values[2];
-      const reasons = [];
+      // TwelveDataの先頭データ values[0] は形成中の足である可能性があります。
+      // ダマシを減らすため、5分足判定には1本前の確定足 values[1] を使います。
+      const confirmed = values[1];
+      const prev = values[2];
+      const prev2 = values[3];
+      const reasons = ["5分足は未確定の最新足を使わず、1本前の確定足で判定しています。"];
       let buyScore = 0;
       let sellScore = 0;
 
-      if (!latest || !prev || !prev2) return { signal: "none", text: "不足", reasons: ["5分足データが不足しています。"] };
+      if (!confirmed || !prev || !prev2) return { signal: "none", text: "不足", reasons: ["5分足データが不足しています。"] };
 
-      if (latest.close > latest.open) { buyScore++; reasons.push("5分足の最新足が陽線です。"); }
-      if (latest.close < latest.open) { sellScore++; reasons.push("5分足の最新足が陰線です。"); }
-      if (latest.close > prev.high) { buyScore++; reasons.push("最新終値が1本前の高値を上抜けています。"); }
-      if (latest.close < prev.low) { sellScore++; reasons.push("最新終値が1本前の安値を下抜けています。"); }
-      if (latest.close > prev.close && prev.close > prev2.close) { buyScore++; reasons.push("5分足の終値が連続して切り上がっています。"); }
-      if (latest.close < prev.close && prev.close < prev2.close) { sellScore++; reasons.push("5分足の終値が連続して切り下がっています。"); }
+      if (confirmed.close > confirmed.open) { buyScore++; reasons.push("5分足の確定足が陽線です。"); }
+      if (confirmed.close < confirmed.open) { sellScore++; reasons.push("5分足の確定足が陰線です。"); }
+      if (confirmed.close > prev.high) { buyScore++; reasons.push("確定足の終値が1本前の高値を上抜けています。"); }
+      if (confirmed.close < prev.low) { sellScore++; reasons.push("確定足の終値が1本前の安値を下抜けています。"); }
+      if (confirmed.close > prev.close && prev.close > prev2.close) { buyScore++; reasons.push("5分足の確定終値が連続して切り上がっています。"); }
+      if (confirmed.close < prev.close && prev.close < prev2.close) { sellScore++; reasons.push("5分足の確定終値が連続して切り下がっています。"); }
 
       if (buyScore >= 2 && buyScore > sellScore) return { signal: "buy", text: "買い形", reasons };
       if (sellScore >= 2 && sellScore > buyScore) return { signal: "sell", text: "売り形", reasons };
-      reasons.push("5分足は買い・売りの形がはっきり揃っていません。");
+      reasons.push("5分足の確定足では、買い・売りの形がはっきり揃っていません。");
       return { signal: "none", text: "形なし", reasons };
     }
 
