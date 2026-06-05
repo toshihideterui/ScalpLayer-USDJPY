@@ -4,40 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#006b4f" />
+  <meta name="theme-color" content="#0057d9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v2.0</title>
+  <title>ScalpLayer USDJPY v2.1</title>
   <style>
     :root {
-      --bg1: #006b4f; --bg2: #07111f; --card: #101827; --input: #020617;
-      --border: #475569; --text: #ffffff; --muted: #cbd5e1; --green: #4ade80;
-      --green-dark: #16a34a; --red: #ef4444; --red-dark: #dc2626; --blue: #334155;
-      --wait: #475569; --yellow: #facc15; --cyan: #38bdf8; --orange: #fb923c;
+      --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
+      --border: #475569; --text: #ffffff; --muted: #cbd5e1;
+      --blue-main: #0b5ed7; --blue-deep: #073b93; --blue-soft: #dbeafe;
+      --green: #4ade80; --green-main: #16a34a; --green-deep: #0f7a34; --green-soft: #dcfce7;
+      --orange: #f97316; --orange-deep: #c2410c; --orange-soft: #ffedd5;
+      --red: #ef4444; --red-dark: #dc2626; --wait: #475569; --yellow: #facc15;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(180deg, var(--bg1), var(--bg2)); color: var(--text); padding: 20px; line-height: 1.7; min-height: 100vh; }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: radial-gradient(circle at top left, rgba(56,189,248,.30), transparent 28%), linear-gradient(180deg, var(--bg1), var(--bg2) 42%, var(--bg3)); color: var(--text); padding: 20px; line-height: 1.7; min-height: 100vh; }
     .container { max-width: 760px; margin: 0 auto; }
     .hero { text-align: center; padding: 12px 0 24px; }
     h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: .02em; }
     h2 { margin-top: 0; font-size: 22px; } h3 { margin-bottom: 8px; }
     .card { background: rgba(16,24,39,.95); border: 1px solid rgba(148,163,184,.18); border-radius: 22px; padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.28); overflow: hidden; }
     .notice { border: 1px solid rgba(250,204,21,.45); background: rgba(250,204,21,.08); color: #fde68a; }
-    .update { border: 1px solid rgba(74,222,128,.35); background: rgba(74,222,128,.08); color: #dcfce7; }
+    .update { border: 1px solid rgba(56,189,248,.42); background: rgba(14,165,233,.12); color: #dbeafe; }
     label { display: block; color: var(--muted); margin-top: 10px; margin-bottom: 6px; font-weight: 700; }
     input, select, textarea, button { width: 100%; padding: 14px 16px; margin: 0 0 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--input); color: var(--text); font-size: 16px; outline: none; }
-    input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74,222,128,.15); }
+    input:focus, select:focus, textarea:focus { border-color: var(--blue-main); box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
     button { border: none; font-weight: 900; cursor: pointer; transition: transform .08s ease, opacity .2s ease; }
     button:active { transform: translateY(1px); }
-    .green { background: var(--green); color: #052e16; } .red { background: var(--red); color: #fff; } .blue { background: var(--blue); color: #fff; }
+    .green { background: var(--green); color: #052e16; } .red { background: var(--red); color: #fff; } .blue { background: var(--blue-main); color: #fff; }
     .result { font-size: 26px; font-weight: 950; padding: 18px; border-radius: 18px; text-align: center; margin-top: 16px; }
-    .buy { background: var(--green-dark); color: #fff; } .sell { background: var(--red-dark); color: #fff; } .wait { background: var(--wait); color: #fff; } .prep { background: #92400e; color: #fff; }
+    .buy { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); color: #fff; } .sell { background: linear-gradient(135deg, var(--blue-main), var(--blue-deep)); color: #fff; } .wait { background: var(--wait); color: #fff; } .prep { background: linear-gradient(135deg, #f59e0b, var(--orange-deep)); color: #fff; }
     .small { color: var(--muted); font-size: 14px; line-height: 1.8; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .statBox { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 16px; padding: 14px; text-align: center; }
     .statBox strong { display: block; font-size: 24px; }
+    .statBox.colorBox { color: #fff; border: 0; text-align: left; box-shadow: 0 12px 24px rgba(0,0,0,.20); }
+    .statBox.colorBox strong { font-size: 28px; line-height: 1.25; margin-top: 6px; }
+    .priceBox { background: linear-gradient(135deg, #0f172a, #111827); }
+    .blueBox { background: linear-gradient(135deg, var(--blue-main), var(--blue-deep)); }
+    .greenBox { background: linear-gradient(135deg, var(--green-main), var(--green-deep)); }
+    .orangeBox { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); }
+    .sectionLabel { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-weight: 900; font-size: 13px; margin-bottom: 8px; }
+    .labelBlue { background: var(--blue-soft); color: var(--blue-deep); }
+    .labelGreen { background: var(--green-soft); color: var(--green-deep); }
+    .labelOrange { background: var(--orange-soft); color: var(--orange-deep); }
     .pill { display: inline-block; padding: 5px 10px; border-radius: 999px; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.25); color: #bae6fd; font-size: 13px; margin: 3px; }
     .reasonList { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
     .reasonList li { margin-bottom: 6px; }
@@ -48,13 +60,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v2.0</h1>
-      <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p>
+      <h1>ScalpLayer USDJPY v2.1</h1>
+      <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v2.0：15分足をエントリー条件から環境認識へ変更。5分足で準備状態を見て、1分足の確定足で実際の買い・売り判定を出す方式にしました。</section>
+    <section class="card update">v2.1：分析画面を15分足=青、5分足=緑、1分足=オレンジに色分け。見た瞬間にどの時間足の情報か分かるUIに変更しました。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -77,12 +89,12 @@
     <section class="card">
       <h2>③ 分析結果</h2>
       <div class="grid">
-        <div class="statBox">現在価格<strong id="currentPrice">--</strong></div>
-        <div class="statBox">15分足環境<strong id="envView">--</strong></div>
-        <div class="statBox">15分足20EMA<strong id="ema20View">--</strong></div>
-        <div class="statBox">5分足準備<strong id="setupView">--</strong></div>
-        <div class="statBox">1分足入口<br><span class="small">確定足</span><strong id="oneSignalView">--</strong></div>
-        <div class="statBox">1分足EMA距離<strong id="oneDistanceView">--</strong></div>
+        <div class="statBox colorBox priceBox">現在価格<strong id="currentPrice">--</strong></div>
+        <div class="statBox colorBox blueBox"><span class="sectionLabel labelBlue">15分足｜環境認識</span>環境<strong id="envView">--</strong></div>
+        <div class="statBox colorBox blueBox"><span class="sectionLabel labelBlue">15分足｜20EMA</span>基準線<strong id="ema20View">--</strong></div>
+        <div class="statBox colorBox greenBox"><span class="sectionLabel labelGreen">5分足｜準備状態</span>状態<strong id="setupView">--</strong></div>
+        <div class="statBox colorBox orangeBox"><span class="sectionLabel labelOrange">1分足｜エントリー判定</span>確定足<strong id="oneSignalView">--</strong></div>
+        <div class="statBox colorBox orangeBox"><span class="sectionLabel labelOrange">1分足｜EMA距離</span>距離<strong id="oneDistanceView">--</strong></div>
       </div>
       <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
