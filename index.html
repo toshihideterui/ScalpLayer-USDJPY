@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.3</title>
+  <title>ScalpLayer USDJPY v1.4</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -92,7 +92,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.3</h1>
+      <h1>ScalpLayer USDJPY v1.4</h1>
       <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
     </section>
 
@@ -101,7 +101,7 @@
     </section>
 
     <section class="card update">
-      v1.3：5分足は未確定足を使わず、1本前の確定足で判定するようにしました。ダマシを減らすための安定化版です。
+      v1.4：20EMAからの距離フィルターを追加しました。飛び乗りを避けるため、EMAから離れすぎたサインは見送りにします。
     </section>
 
     <section class="card">
@@ -129,6 +129,7 @@
         <div class="statBox">15分足20EMA<strong id="ema20View">--</strong></div>
         <div class="statBox">15分足EMA向き<strong id="emaDirView">--</strong></div>
         <div class="statBox">5分足の形<br><span class="small">確定足</span><strong id="fiveSignalView">--</strong></div>
+        <div class="statBox">EMA距離<strong id="emaDistanceView">--</strong></div>
       </div>
       <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
@@ -168,7 +169,7 @@
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
     let lastJudgeOk = false;
     let lastJudgeText = "判定なし";
-    let lastSnapshot = { price: "--", ema: "--", emaDir: "--", five: "--" };
+    let lastSnapshot = { price: "--", ema: "--", emaDir: "--", five: "--", distance: "--" };
 
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
@@ -224,6 +225,27 @@
       return calculateEMA(values.slice(1), period);
     }
 
+    function analyzeEmaDistance(price, ema20) {
+      const distancePips = Math.abs(price - ema20) * 100;
+      let level = "good";
+      let text = `${distancePips.toFixed(1)}pips：良い距離`;
+      let reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。0〜5pipsなので、飛び乗り感は比較的少ない位置です。`;
+
+      if (distancePips > 5 && distancePips <= 15) {
+        level = "caution";
+        text = `${distancePips.toFixed(1)}pips：注意`;
+        reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。5〜15pipsなので、少し伸びた位置です。押し目・戻りを待つ意識が必要です。`;
+      }
+
+      if (distancePips > 15) {
+        level = "far";
+        text = `${distancePips.toFixed(1)}pips：離れすぎ`;
+        reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。15pips以上離れているため、飛び乗り警戒で見送り優先です。`;
+      }
+
+      return { distancePips, level, text, reason };
+    }
+
     function analyzeFiveMinute(values) {
       // TwelveDataの先頭データ values[0] は形成中の足である可能性があります。
       // ダマシを減らすため、5分足判定には1本前の確定足 values[1] を使います。
@@ -269,6 +291,7 @@
 
         const five = analyzeFiveMinute(series5);
         const price = latest15.close;
+        const emaDistance = analyzeEmaDistance(price, ema20);
         const reasons = [];
         const badges = [];
 
@@ -279,30 +302,38 @@
         if (emaDir === "up") { reasons.push("15分足20EMAは上向きです。"); badges.push("EMA上向き"); }
         if (emaDir === "down") { reasons.push("15分足20EMAは下向きです。"); badges.push("EMA下向き"); }
         if (emaDir === "flat") { reasons.push("15分足20EMAは横ばいです。方向感が弱い状態です。"); badges.push("EMA横ばい"); }
+        reasons.push(emaDistance.reason);
+        badges.push(emaDistance.text);
         reasons.push(...five.reasons);
         badges.push(five.text);
 
         let judge = "見送り";
         let cls = "result wait";
         lastJudgeOk = false;
-        if (price > ema20 && emaDir === "up" && five.signal === "buy") {
+        const distanceOk = emaDistance.level !== "far";
+
+        if (price > ema20 && emaDir === "up" && five.signal === "buy" && distanceOk) {
           judge = "買い優勢";
           cls = "result buy";
           lastJudgeOk = true;
-          reasons.push("15分足の上方向と5分足の買い形が揃ったため、買い優勢と判定しました。");
-        } else if (price < ema20 && emaDir === "down" && five.signal === "sell") {
+          reasons.push("15分足の上方向、5分足の買い形、EMA距離が許容範囲のため、買い優勢と判定しました。");
+        } else if (price < ema20 && emaDir === "down" && five.signal === "sell" && distanceOk) {
           judge = "売り優勢";
           cls = "result sell";
           lastJudgeOk = true;
-          reasons.push("15分足の下方向と5分足の売り形が揃ったため、売り優勢と判定しました。");
+          reasons.push("15分足の下方向、5分足の売り形、EMA距離が許容範囲のため、売り優勢と判定しました。");
         } else {
-          reasons.push("15分足の方向と5分足の形が完全には揃っていないため、見送りと判定しました。");
+          if (!distanceOk) {
+            reasons.push("方向と5分足の形が揃っていても、20EMAから離れすぎているため、飛び乗り警戒で見送りと判定しました。");
+          } else {
+            reasons.push("15分足の方向と5分足の形が完全には揃っていないため、見送りと判定しました。");
+          }
         }
 
         lastJudgeText = judge;
         maybeAlert(judge);
-        lastSnapshot = { price: price.toFixed(3), ema: ema20.toFixed(3), emaDir: emaDir, five: five.text };
-        renderAnalysis(price, ema20, emaDir, five.text, judge, cls, badges, reasons);
+        lastSnapshot = { price: price.toFixed(3), ema: ema20.toFixed(3), emaDir: emaDir, five: five.text, distance: emaDistance.text };
+        renderAnalysis(price, ema20, emaDir, five.text, emaDistance.text, judge, cls, badges, reasons);
         const now = new Date();
         document.getElementById("lastTime").textContent = "最終分析：" + now.toLocaleString();
         status.textContent = "分析完了。";
@@ -313,11 +344,12 @@
       }
     }
 
-    function renderAnalysis(price, ema20, emaDir, fiveText, judge, cls, badges, reasons) {
+    function renderAnalysis(price, ema20, emaDir, fiveText, emaDistanceText, judge, cls, badges, reasons) {
       document.getElementById("currentPrice").textContent = price.toFixed(3);
       document.getElementById("ema20View").textContent = ema20.toFixed(3);
       document.getElementById("emaDirView").textContent = emaDir === "up" ? "上向き" : emaDir === "down" ? "下向き" : "横ばい";
       document.getElementById("fiveSignalView").textContent = fiveText;
+      document.getElementById("emaDistanceView").textContent = emaDistanceText;
       const result = document.getElementById("result");
       result.textContent = judge;
       result.className = cls;
@@ -439,7 +471,7 @@
       const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け";
       const item = document.createElement("div");
       item.className = "logItem";
-      item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分EMA：${lastSnapshot.ema}｜5分足：${lastSnapshot.five}`;
+      item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分EMA：${lastSnapshot.ema}｜EMA距離：${lastSnapshot.distance}｜5分足：${lastSnapshot.five}`;
       if (log.textContent === "まだ記録はありません。") log.textContent = "";
       log.prepend(item);
     }
