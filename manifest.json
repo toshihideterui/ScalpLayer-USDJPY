@@ -1,7 +1,7 @@
 {
   "name": "ScalpLayer USDJPY",
   "short_name": "ScalpLayer",
-  "description": "USDJPY専用スキャルピング分析ツール",
+  "description": "USDJPY専用スキャルピング分析ツール v2.0",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

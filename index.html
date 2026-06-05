@@ -9,100 +9,52 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.5</title>
+  <title>ScalpLayer USDJPY v2.0</title>
   <style>
     :root {
-      --bg1: #006b4f;
-      --bg2: #07111f;
-      --card: #101827;
-      --input: #020617;
-      --border: #475569;
-      --text: #ffffff;
-      --muted: #cbd5e1;
-      --green: #4ade80;
-      --green-dark: #16a34a;
-      --red: #ef4444;
-      --red-dark: #dc2626;
-      --blue: #334155;
-      --wait: #475569;
-      --yellow: #facc15;
-      --cyan: #38bdf8;
+      --bg1: #006b4f; --bg2: #07111f; --card: #101827; --input: #020617;
+      --border: #475569; --text: #ffffff; --muted: #cbd5e1; --green: #4ade80;
+      --green-dark: #16a34a; --red: #ef4444; --red-dark: #dc2626; --blue: #334155;
+      --wait: #475569; --yellow: #facc15; --cyan: #38bdf8; --orange: #fb923c;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(180deg, var(--bg1), var(--bg2));
-      color: var(--text);
-      padding: 20px;
-      line-height: 1.7;
-      min-height: 100vh;
-    }
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(180deg, var(--bg1), var(--bg2)); color: var(--text); padding: 20px; line-height: 1.7; min-height: 100vh; }
     .container { max-width: 760px; margin: 0 auto; }
     .hero { text-align: center; padding: 12px 0 24px; }
     h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: .02em; }
-    h2 { margin-top: 0; font-size: 22px; }
-    h3 { margin-bottom: 8px; }
-    .card {
-      background: rgba(16, 24, 39, .95);
-      border: 1px solid rgba(148, 163, 184, .18);
-      border-radius: 22px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
-      overflow: hidden;
-    }
-    .notice {
-      border: 1px solid rgba(250, 204, 21, .45);
-      background: rgba(250, 204, 21, .08);
-      color: #fde68a;
-    }
-    .update {
-      border: 1px solid rgba(74, 222, 128, .35);
-      background: rgba(74, 222, 128, .08);
-      color: #dcfce7;
-    }
+    h2 { margin-top: 0; font-size: 22px; } h3 { margin-bottom: 8px; }
+    .card { background: rgba(16,24,39,.95); border: 1px solid rgba(148,163,184,.18); border-radius: 22px; padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.28); overflow: hidden; }
+    .notice { border: 1px solid rgba(250,204,21,.45); background: rgba(250,204,21,.08); color: #fde68a; }
+    .update { border: 1px solid rgba(74,222,128,.35); background: rgba(74,222,128,.08); color: #dcfce7; }
     label { display: block; color: var(--muted); margin-top: 10px; margin-bottom: 6px; font-weight: 700; }
-    input, select, textarea, button {
-      width: 100%; padding: 14px 16px; margin: 0 0 16px; border-radius: 14px;
-      border: 1px solid var(--border); background: var(--input); color: var(--text);
-      font-size: 16px; outline: none;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74, 222, 128, .15); }
+    input, select, textarea, button { width: 100%; padding: 14px 16px; margin: 0 0 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--input); color: var(--text); font-size: 16px; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74,222,128,.15); }
     button { border: none; font-weight: 900; cursor: pointer; transition: transform .08s ease, opacity .2s ease; }
     button:active { transform: translateY(1px); }
-    .green { background: var(--green); color: #052e16; }
-    .red { background: var(--red); color: #fff; }
-    .blue { background: var(--blue); color: #fff; }
+    .green { background: var(--green); color: #052e16; } .red { background: var(--red); color: #fff; } .blue { background: var(--blue); color: #fff; }
     .result { font-size: 26px; font-weight: 950; padding: 18px; border-radius: 18px; text-align: center; margin-top: 16px; }
-    .buy { background: var(--green-dark); color: #fff; }
-    .sell { background: var(--red-dark); color: #fff; }
-    .wait { background: var(--wait); color: #fff; }
+    .buy { background: var(--green-dark); color: #fff; } .sell { background: var(--red-dark); color: #fff; } .wait { background: var(--wait); color: #fff; } .prep { background: #92400e; color: #fff; }
     .small { color: var(--muted); font-size: 14px; line-height: 1.8; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .statBox { background: rgba(2, 6, 23, .65); border: 1px solid rgba(148, 163, 184, .2); border-radius: 16px; padding: 14px; text-align: center; }
+    .statBox { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 16px; padding: 14px; text-align: center; }
     .statBox strong { display: block; font-size: 24px; }
-    .pill { display: inline-block; padding: 5px 10px; border-radius: 999px; background: rgba(56, 189, 248, .12); border: 1px solid rgba(56,189,248,.25); color: #bae6fd; font-size: 13px; margin: 3px; }
+    .pill { display: inline-block; padding: 5px 10px; border-radius: 999px; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.25); color: #bae6fd; font-size: 13px; margin: 3px; }
     .reasonList { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
     .reasonList li { margin-bottom: 6px; }
-    .logItem { background: rgba(2, 6, 23, .65); border: 1px solid rgba(148, 163, 184, .2); border-radius: 14px; padding: 12px; margin-bottom: 10px; color: var(--muted); font-size: 14px; }
+    .logItem { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 14px; padding: 12px; margin-bottom: 10px; color: var(--muted); font-size: 14px; }
     @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.5</h1>
-      <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
+      <h1>ScalpLayer USDJPY v2.0</h1>
+      <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p>
     </section>
 
-    <section class="card notice">
-      ※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。
-    </section>
+    <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">
-      v1.5：押し目待ち・戻り待ち判定を追加しました。方向が合っていても伸びた位置では飛び乗らず、より有利なタイミングを待つ設計にしました。
-    </section>
+    <section class="card update">v2.0：15分足をエントリー条件から環境認識へ変更。5分足で準備状態を見て、1分足の確定足で実際の買い・売り判定を出す方式にしました。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -115,9 +67,9 @@
     <section class="card">
       <h2>② 自動分析</h2>
       <button class="green" onclick="runAnalysis()">USD/JPYを自動分析</button>
-      <button id="autoBtn" class="red" onclick="toggleAutoAnalysis()">5分ごと自動分析 OFF</button>
+      <button id="autoBtn" class="red" onclick="toggleAutoAnalysis()">1分ごと自動分析 OFF</button>
       <button id="alertBtn" class="red" onclick="toggleSoundAlert()">音アラート OFF</button>
-      <p id="alertStatus" class="small">音アラート：OFF。買い優勢・売り優勢サインが出た時に音で知らせたい場合はONにしてください。</p>
+      <p id="alertStatus" class="small">音アラート：OFF。買い・売りサインが出た時に音で知らせたい場合はONにしてください。</p>
       <p id="status" class="small">待機中です。</p>
       <p id="lastTime" class="small">最終分析：未実行</p>
     </section>
@@ -126,10 +78,11 @@
       <h2>③ 分析結果</h2>
       <div class="grid">
         <div class="statBox">現在価格<strong id="currentPrice">--</strong></div>
+        <div class="statBox">15分足環境<strong id="envView">--</strong></div>
         <div class="statBox">15分足20EMA<strong id="ema20View">--</strong></div>
-        <div class="statBox">15分足EMA向き<strong id="emaDirView">--</strong></div>
-        <div class="statBox">5分足の形<br><span class="small">確定足</span><strong id="fiveSignalView">--</strong></div>
-        <div class="statBox">EMA距離<strong id="emaDistanceView">--</strong></div>
+        <div class="statBox">5分足準備<strong id="setupView">--</strong></div>
+        <div class="statBox">1分足入口<br><span class="small">確定足</span><strong id="oneSignalView">--</strong></div>
+        <div class="statBox">1分足EMA距離<strong id="oneDistanceView">--</strong></div>
       </div>
       <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
@@ -140,75 +93,44 @@
     <section class="card">
       <h2>④ トレード記録</h2>
       <label for="tradeResult">結果</label>
-      <select id="tradeResult">
-        <option value="win">勝ち</option>
-        <option value="lose">負け</option>
-        <option value="draw">引き分け</option>
-      </select>
+      <select id="tradeResult"><option value="win">勝ち</option><option value="lose">負け</option><option value="draw">引き分け</option></select>
       <button class="blue" onclick="recordTrade()">記録する</button>
       <button class="red" onclick="resetStats()">記録をリセット</button>
       <div class="grid">
-        <div class="statBox">勝ち<strong id="wins">0</strong></div>
-        <div class="statBox">負け<strong id="loses">0</strong></div>
-        <div class="statBox">引き分け<strong id="draws">0</strong></div>
-        <div class="statBox">勝率<strong id="winRate">0%</strong></div>
+        <div class="statBox">勝ち<strong id="wins">0</strong></div><div class="statBox">負け<strong id="loses">0</strong></div><div class="statBox">引き分け<strong id="draws">0</strong></div><div class="statBox">勝率<strong id="winRate">0%</strong></div>
       </div>
-      <h3>記録ログ</h3>
-      <div id="log" class="small">まだ記録はありません。</div>
+      <h3>記録ログ</h3><div id="log" class="small">まだ記録はありません。</div>
     </section>
   </main>
 
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
-    const STAT_STORAGE = "scalplayer_usdjpy_stats_v1_1";
-    let autoTimer = null;
-    let autoEnabled = false;
-    let soundAlertEnabled = false;
-    let audioContext = null;
+    const STAT_STORAGE = "scalplayer_usdjpy_stats_v2_0";
+    let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
-    let lastJudgeOk = false;
     let lastJudgeText = "判定なし";
-    let lastSnapshot = { price: "--", ema: "--", emaDir: "--", five: "--", distance: "--" };
+    let lastSnapshot = { price: "--", env: "--", setup: "--", one: "--", distance: "--" };
 
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
-      if (savedKey) {
-        document.getElementById("apiKey").value = savedKey;
-        document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。";
-      }
-      loadStats();
-      updateStatsView();
-      updateAutoButtonView();
-      updateAlertButtonView();
+      if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
+      loadStats(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView();
     });
 
     function saveApiKey() {
       const key = document.getElementById("apiKey").value.trim();
-      if (!key) {
-        document.getElementById("keyStatus").textContent = "APIキーを入力してください。";
-        return;
-      }
-      localStorage.setItem(KEY_STORAGE, key);
-      document.getElementById("keyStatus").textContent = "APIキーを保存しました。";
+      if (!key) { document.getElementById("keyStatus").textContent = "APIキーを入力してください。"; return; }
+      localStorage.setItem(KEY_STORAGE, key); document.getElementById("keyStatus").textContent = "APIキーを保存しました。";
     }
 
     async function fetchSeries(interval, outputsize) {
       const key = document.getElementById("apiKey").value.trim();
       if (!key) throw new Error("APIキーが未入力です。");
       const url = `https://api.twelvedata.com/time_series?symbol=USD/JPY&interval=${interval}&outputsize=${outputsize}&apikey=${encodeURIComponent(key)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.status === "error" || !data.values || !Array.isArray(data.values)) {
-        throw new Error(data.message || `${interval}データを取得できませんでした。`);
-      }
-      return data.values.map(v => ({
-        time: v.datetime,
-        open: Number(v.open),
-        high: Number(v.high),
-        low: Number(v.low),
-        close: Number(v.close)
-      })).filter(v => Number.isFinite(v.close));
+      const res = await fetch(url); const data = await res.json();
+      if (data.status === "error" || !data.values || !Array.isArray(data.values)) throw new Error(data.message || `${interval}データを取得できませんでした。`);
+      return data.values.map(v => ({ time: v.datetime, open: Number(v.open), high: Number(v.high), low: Number(v.low), close: Number(v.close) })).filter(v => Number.isFinite(v.close));
     }
 
     function calculateEMA(values, period) {
@@ -219,316 +141,119 @@
       for (let i = period; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
       return ema;
     }
+    function calculatePreviousEMA(values, period) { if (values.length <= period) return null; return calculateEMA(values.slice(1), period); }
 
-    function calculatePreviousEMA(values, period) {
-      if (values.length <= period) return null;
-      return calculateEMA(values.slice(1), period);
+    function analyzeEnvironment(series15) {
+      const latest = series15[0]; const ema20 = calculateEMA(series15, 20); const prevEma20 = calculatePreviousEMA(series15, 20);
+      if (!latest || ema20 === null || prevEma20 === null) throw new Error("15分足のEMA計算に必要なデータが不足しています。");
+      let env = "range"; const reasons = [];
+      if (latest.close > ema20 && ema20 > prevEma20 + 0.005) { env = "up"; reasons.push("15分足は価格が20EMAより上、かつ20EMAが上向きです。環境認識は上昇寄りです。"); }
+      else if (latest.close < ema20 && ema20 < prevEma20 - 0.005) { env = "down"; reasons.push("15分足は価格が20EMAより下、かつ20EMAが下向きです。環境認識は下降寄りです。"); }
+      else { reasons.push("15分足は方向がはっきりしません。環境認識はレンジ寄りです。"); }
+      return { env, ema20, price: latest.close, text: env === "up" ? "上昇環境" : env === "down" ? "下降環境" : "レンジ警戒", reasons };
     }
 
-    function analyzeEmaDistance(price, ema20) {
-      const distancePips = Math.abs(price - ema20) * 100;
-      let level = "good";
-      let text = `${distancePips.toFixed(1)}pips：良い距離`;
-      let reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。0〜5pipsなので、飛び乗り感は比較的少ない位置です。`;
-
-      if (distancePips > 5 && distancePips <= 15) {
-        level = "caution";
-        text = `${distancePips.toFixed(1)}pips：注意`;
-        reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。5〜15pipsなので、少し伸びた位置です。押し目・戻りを待つ意識が必要です。`;
-      }
-
-      if (distancePips > 15) {
-        level = "far";
-        text = `${distancePips.toFixed(1)}pips：離れすぎ`;
-        reason = `価格と15分足20EMAの距離は約${distancePips.toFixed(1)}pipsです。15pips以上離れているため、飛び乗り警戒で見送り優先です。`;
-      }
-
-      return { distancePips, level, text, reason };
+    function analyzeSetup(series5) {
+      const c = series5[1], p = series5[2], p2 = series5[3];
+      const reasons = ["5分足は未確定足を使わず、1本前の確定足で準備状態を見ています。"];
+      if (!c || !p || !p2) return { setup: "none", text: "不足", reasons: ["5分足データが不足しています。"] };
+      let buy = 0, sell = 0;
+      if (c.close > c.open) { buy++; reasons.push("5分足の確定足が陽線です。"); }
+      if (c.close < c.open) { sell++; reasons.push("5分足の確定足が陰線です。"); }
+      if (c.close > p.close && p.close >= p2.close) { buy++; reasons.push("5分足の終値が切り上がっています。"); }
+      if (c.close < p.close && p.close <= p2.close) { sell++; reasons.push("5分足の終値が切り下がっています。"); }
+      if (c.low <= p.low && c.close > p.close) { buy++; reasons.push("5分足で下を試してから戻す動きがあります。押し目候補です。"); }
+      if (c.high >= p.high && c.close < p.close) { sell++; reasons.push("5分足で上を試してから戻す動きがあります。戻り売り候補です。"); }
+      if (buy >= 2 && buy > sell) return { setup: "buy", text: "買い準備", reasons };
+      if (sell >= 2 && sell > buy) return { setup: "sell", text: "売り準備", reasons };
+      reasons.push("5分足では準備状態がはっきりしません。"); return { setup: "none", text: "準備なし", reasons };
     }
 
-    function analyzeFiveMinute(values) {
-      // TwelveDataの先頭データ values[0] は形成中の足である可能性があります。
-      // ダマシを減らすため、5分足判定には1本前の確定足 values[1] を使います。
-      const confirmed = values[1];
-      const prev = values[2];
-      const prev2 = values[3];
-      const reasons = ["5分足は未確定の最新足を使わず、1本前の確定足で判定しています。"];
-      let buyScore = 0;
-      let sellScore = 0;
+    function analyzeOneMinute(series1) {
+      const c = series1[1], p = series1[2], p2 = series1[3];
+      const ema9 = calculateEMA(series1, 9);
+      const reasons = ["1分足は未確定足を使わず、1本前の確定足でエントリーを見ています。"];
+      if (!c || !p || !p2 || ema9 === null) return { signal: "none", text: "不足", ema9, distance: "--", level: "none", reasons: ["1分足データが不足しています。"] };
+      let buy = 0, sell = 0;
+      if (c.close > c.open) { buy++; reasons.push("1分足の確定足が陽線です。"); }
+      if (c.close < c.open) { sell++; reasons.push("1分足の確定足が陰線です。"); }
+      if (c.close > p.high) { buy++; reasons.push("1分足の終値が1本前の高値を上抜けています。"); }
+      if (c.close < p.low) { sell++; reasons.push("1分足の終値が1本前の安値を下抜けています。"); }
+      if (c.close > ema9 && p.close <= ema9) { buy++; reasons.push("1分足で9EMAを下から上へ回復しています。押し目後の反発候補です。"); }
+      if (c.close < ema9 && p.close >= ema9) { sell++; reasons.push("1分足で9EMAを上から下へ割っています。戻り後の反落候補です。"); }
+      if (c.close > p.close && p.close >= p2.close) { buy++; reasons.push("1分足の終値が短く切り上がっています。"); }
+      if (c.close < p.close && p.close <= p2.close) { sell++; reasons.push("1分足の終値が短く切り下がっています。"); }
 
-      if (!confirmed || !prev || !prev2) return { signal: "none", text: "不足", reasons: ["5分足データが不足しています。"] };
+      const distancePips = Math.abs(c.close - ema9) * 100;
+      let level = "good"; let distance = `${distancePips.toFixed(1)}pips：近い`;
+      if (distancePips > 3 && distancePips <= 8) { level = "caution"; distance = `${distancePips.toFixed(1)}pips：少し離れ`; }
+      if (distancePips > 8) { level = "far"; distance = `${distancePips.toFixed(1)}pips：離れすぎ`; }
+      reasons.push(`1分足9EMAとの距離は約${distancePips.toFixed(1)}pipsです。`);
 
-      if (confirmed.close > confirmed.open) { buyScore++; reasons.push("5分足の確定足が陽線です。"); }
-      if (confirmed.close < confirmed.open) { sellScore++; reasons.push("5分足の確定足が陰線です。"); }
-      if (confirmed.close > prev.high) { buyScore++; reasons.push("確定足の終値が1本前の高値を上抜けています。"); }
-      if (confirmed.close < prev.low) { sellScore++; reasons.push("確定足の終値が1本前の安値を下抜けています。"); }
-      if (confirmed.close > prev.close && prev.close > prev2.close) { buyScore++; reasons.push("5分足の確定終値が連続して切り上がっています。"); }
-      if (confirmed.close < prev.close && prev.close < prev2.close) { sellScore++; reasons.push("5分足の確定終値が連続して切り下がっています。"); }
-
-      if (buyScore >= 2 && buyScore > sellScore) return { signal: "buy", text: "買い形", reasons };
-      if (sellScore >= 2 && sellScore > buyScore) return { signal: "sell", text: "売り形", reasons };
-      reasons.push("5分足の確定足では、買い・売りの形がはっきり揃っていません。");
-      return { signal: "none", text: "形なし", reasons };
+      if (buy >= 2 && buy > sell) return { signal: "buy", text: "買い入口", ema9, distance, level, reasons };
+      if (sell >= 2 && sell > buy) return { signal: "sell", text: "売り入口", ema9, distance, level, reasons };
+      reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, distance, level, reasons };
     }
 
     async function runAnalysis() {
-      const status = document.getElementById("status");
-      status.textContent = "取得・分析中...";
+      const status = document.getElementById("status"); status.textContent = "取得・分析中...";
       try {
-        const [series15, series5] = await Promise.all([
-          fetchSeries("15min", 35),
-          fetchSeries("5min", 10)
-        ]);
+        const [series15, series5, series1] = await Promise.all([fetchSeries("15min", 35), fetchSeries("5min", 12), fetchSeries("1min", 30)]);
+        const env = analyzeEnvironment(series15); const setup = analyzeSetup(series5); const one = analyzeOneMinute(series1);
+        const reasons = []; const badges = [];
+        reasons.push(`現在価格は ${env.price.toFixed(3)} です。`); reasons.push(...env.reasons); reasons.push(...setup.reasons); reasons.push(...one.reasons);
+        badges.push(env.text, setup.text, one.text, one.distance);
 
-        const latest15 = series15[0];
-        const ema20 = calculateEMA(series15, 20);
-        const prevEma20 = calculatePreviousEMA(series15, 20);
-        if (!latest15 || ema20 === null || prevEma20 === null) throw new Error("EMA計算に必要な15分足データが不足しています。");
+        let judge = "見送り"; let cls = "result wait";
+        const buyReady = env.env !== "down" && setup.setup === "buy" && one.signal === "buy";
+        const sellReady = env.env !== "up" && setup.setup === "sell" && one.signal === "sell";
 
-        let emaDir = "flat";
-        if (ema20 > prevEma20 + 0.005) emaDir = "up";
-        if (ema20 < prevEma20 - 0.005) emaDir = "down";
+        if (env.env === "range") reasons.push("15分足がレンジ寄りなので、サインが出てもロットを落とす・見送るなど慎重運用が前提です。");
 
-        const five = analyzeFiveMinute(series5);
-        const price = latest15.close;
-        const emaDistance = analyzeEmaDistance(price, ema20);
-        const reasons = [];
-        const badges = [];
+        if (buyReady) {
+          if (one.level === "far") { judge = "押し目待ち"; cls = "result prep"; reasons.push("1分足の買い入口はありますが、9EMAから離れすぎています。飛び乗りを避けて押し目待ちにしました。"); }
+          else { judge = "買い入口"; cls = "result buy"; reasons.push("5分足の買い準備に対して、1分足の買い入口が出ています。v2.0ではここをエントリー候補として扱います。"); }
+        } else if (sellReady) {
+          if (one.level === "far") { judge = "戻り待ち"; cls = "result prep"; reasons.push("1分足の売り入口はありますが、9EMAから離れすぎています。飛び乗りを避けて戻り待ちにしました。"); }
+          else { judge = "売り入口"; cls = "result sell"; reasons.push("5分足の売り準備に対して、1分足の売り入口が出ています。v2.0ではここをエントリー候補として扱います。"); }
+        } else if (setup.setup === "buy" && one.signal !== "buy") { judge = "買い準備中"; cls = "result prep"; reasons.push("5分足は買い準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
+        else if (setup.setup === "sell" && one.signal !== "sell") { judge = "売り準備中"; cls = "result prep"; reasons.push("5分足は売り準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
+        else { reasons.push("5分足の準備と1分足の入口が揃っていないため、見送りです。"); }
 
-        reasons.push(`現在価格は ${price.toFixed(3)} です。`);
-        reasons.push(`15分足20EMAは ${ema20.toFixed(3)} です。`);
-        if (price > ema20) { reasons.push("現在価格が15分足20EMAより上にあります。"); badges.push("価格 > EMA"); }
-        if (price < ema20) { reasons.push("現在価格が15分足20EMAより下にあります。"); badges.push("価格 < EMA"); }
-        if (emaDir === "up") { reasons.push("15分足20EMAは上向きです。"); badges.push("EMA上向き"); }
-        if (emaDir === "down") { reasons.push("15分足20EMAは下向きです。"); badges.push("EMA下向き"); }
-        if (emaDir === "flat") { reasons.push("15分足20EMAは横ばいです。方向感が弱い状態です。"); badges.push("EMA横ばい"); }
-        reasons.push(emaDistance.reason);
-        badges.push(emaDistance.text);
-        reasons.push(...five.reasons);
-        badges.push(five.text);
-
-        let judge = "見送り";
-        let cls = "result wait";
-        lastJudgeOk = false;
-        const buySetup = price > ema20 && emaDir === "up" && five.signal === "buy";
-        const sellSetup = price < ema20 && emaDir === "down" && five.signal === "sell";
-
-        if (buySetup) {
-          if (emaDistance.level === "good") {
-            judge = "買い優勢";
-            cls = "result buy";
-            lastJudgeOk = true;
-            reasons.push("15分足の上方向、5分足の買い形、EMA距離が近いため、買い優勢と判定しました。");
-          } else if (emaDistance.level === "caution") {
-            judge = "押し目待ち";
-            cls = "result wait";
-            reasons.push("上方向の条件は揃っていますが、20EMAから少し離れています。今すぐ飛び乗らず、5分足で押し目を待つ判定にしました。");
-          } else {
-            judge = "見送り";
-            cls = "result wait";
-            reasons.push("上方向の条件は揃っていますが、20EMAから離れすぎています。伸び切り警戒で見送りと判定しました。");
-          }
-        } else if (sellSetup) {
-          if (emaDistance.level === "good") {
-            judge = "売り優勢";
-            cls = "result sell";
-            lastJudgeOk = true;
-            reasons.push("15分足の下方向、5分足の売り形、EMA距離が近いため、売り優勢と判定しました。");
-          } else if (emaDistance.level === "caution") {
-            judge = "戻り待ち";
-            cls = "result wait";
-            reasons.push("下方向の条件は揃っていますが、20EMAから少し離れています。今すぐ飛び乗らず、5分足で戻りを待つ判定にしました。");
-          } else {
-            judge = "見送り";
-            cls = "result wait";
-            reasons.push("下方向の条件は揃っていますが、20EMAから離れすぎています。伸び切り警戒で見送りと判定しました。");
-          }
-        } else {
-          reasons.push("15分足の方向と5分足の形が完全には揃っていないため、見送りと判定しました。");
-        }
-
-        lastJudgeText = judge;
-        maybeAlert(judge);
-        lastSnapshot = { price: price.toFixed(3), ema: ema20.toFixed(3), emaDir: emaDir, five: five.text, distance: emaDistance.text };
-        renderAnalysis(price, ema20, emaDir, five.text, emaDistance.text, judge, cls, badges, reasons);
-        const now = new Date();
-        document.getElementById("lastTime").textContent = "最終分析：" + now.toLocaleString();
-        status.textContent = "分析完了。";
-      } catch (e) {
-        console.error(e);
-        status.textContent = "取得失敗：" + e.message;
-        renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]);
-      }
+        lastJudgeText = judge; maybeAlert(judge);
+        lastSnapshot = { price: env.price.toFixed(3), env: env.text, setup: setup.text, one: one.text, distance: one.distance };
+        renderAnalysis(env, setup, one, judge, cls, badges, reasons);
+        document.getElementById("lastTime").textContent = "最終分析：" + new Date().toLocaleString(); status.textContent = "分析完了。";
+      } catch (e) { console.error(e); status.textContent = "取得失敗：" + e.message; renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]); }
     }
 
-    function renderAnalysis(price, ema20, emaDir, fiveText, emaDistanceText, judge, cls, badges, reasons) {
-      document.getElementById("currentPrice").textContent = price.toFixed(3);
-      document.getElementById("ema20View").textContent = ema20.toFixed(3);
-      document.getElementById("emaDirView").textContent = emaDir === "up" ? "上向き" : emaDir === "down" ? "下向き" : "横ばい";
-      document.getElementById("fiveSignalView").textContent = fiveText;
-      document.getElementById("emaDistanceView").textContent = emaDistanceText;
-      const result = document.getElementById("result");
-      result.textContent = judge;
-      result.className = cls;
-      document.getElementById("badges").innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join("");
-      renderReasons(reasons);
+    function renderAnalysis(env, setup, one, judge, cls, badges, reasons) {
+      document.getElementById("currentPrice").textContent = env.price.toFixed(3);
+      document.getElementById("envView").textContent = env.text;
+      document.getElementById("ema20View").textContent = env.ema20.toFixed(3);
+      document.getElementById("setupView").textContent = setup.text;
+      document.getElementById("oneSignalView").textContent = one.text;
+      document.getElementById("oneDistanceView").textContent = one.distance;
+      const result = document.getElementById("result"); result.textContent = judge; result.className = cls;
+      document.getElementById("badges").innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join(""); renderReasons(reasons);
     }
+    function renderReasons(reasons) { document.getElementById("reasons").innerHTML = reasons.map(r => `<li>${escapeHtml(r)}</li>`).join(""); }
 
-    function renderReasons(reasons) {
-      document.getElementById("reasons").innerHTML = reasons.map(r => `<li>${escapeHtml(r)}</li>`).join("");
-    }
+    function updateAutoButtonView() { const btn = document.getElementById("autoBtn"); if (autoEnabled) { btn.textContent = "1分ごと自動分析 ON"; btn.className = "green"; } else { btn.textContent = "1分ごと自動分析 OFF"; btn.className = "red"; } }
+    function updateAlertButtonView() { const btn = document.getElementById("alertBtn"); const status = document.getElementById("alertStatus"); if (soundAlertEnabled) { btn.textContent = "音アラート ON"; btn.className = "green"; status.textContent = "音アラート：ON。新しい買い入口・売り入口サインが出た時に音で知らせます。"; } else { btn.textContent = "音アラート OFF"; btn.className = "red"; status.textContent = "音アラート：OFF。買い・売りサインが出た時に音で知らせたい場合はONにしてください。"; } }
+    function toggleAutoAnalysis() { autoEnabled = !autoEnabled; if (autoEnabled) { runAnalysis(); autoTimer = setInterval(runAnalysis, 60 * 1000); } else { if (autoTimer) clearInterval(autoTimer); autoTimer = null; } updateAutoButtonView(); }
+    function toggleSoundAlert() { soundAlertEnabled = !soundAlertEnabled; if (soundAlertEnabled) { unlockAudio(); updateAlertButtonView(); playAlertSound("test"); } else updateAlertButtonView(); }
+    function unlockAudio() { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return; if (!audioContext) audioContext = new AudioCtx(); if (audioContext.state === "suspended") audioContext.resume(); } catch(e) {} }
+    function playAlertSound(type) { if (!soundAlertEnabled && type !== "test") return; try { unlockAudio(); if (!audioContext) return; const now = audioContext.currentTime; const freqs = type === "sell" ? [660,440,330] : type === "buy" ? [523,659,784] : [440,660]; freqs.forEach((freq,i) => { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = "sine"; osc.frequency.setValueAtTime(freq, now + i * .16); gain.gain.setValueAtTime(.0001, now + i * .16); gain.gain.exponentialRampToValueAtTime(.18, now + i * .16 + .02); gain.gain.exponentialRampToValueAtTime(.0001, now + i * .16 + .13); osc.connect(gain); gain.connect(audioContext.destination); osc.start(now + i * .16); osc.stop(now + i * .16 + .14); }); } catch(e) {} }
+    function maybeAlert(judge) { if (!soundAlertEnabled) { lastAlertJudge = judge; return; } const isSignal = judge === "買い入口" || judge === "売り入口"; if (isSignal && judge !== lastAlertJudge) playAlertSound(judge === "買い入口" ? "buy" : "sell"); lastAlertJudge = judge; }
 
-    function updateAutoButtonView() {
-      const btn = document.getElementById("autoBtn");
-      if (autoEnabled) {
-        btn.textContent = "5分ごと自動分析 ON";
-        btn.className = "green";
-      } else {
-        btn.textContent = "5分ごと自動分析 OFF";
-        btn.className = "red";
-      }
-    }
-
-    function updateAlertButtonView() {
-      const btn = document.getElementById("alertBtn");
-      const status = document.getElementById("alertStatus");
-      if (soundAlertEnabled) {
-        btn.textContent = "音アラート ON";
-        btn.className = "green";
-        status.textContent = "音アラート：ON。新しい買い優勢・売り優勢サインが出た時に音で知らせます。";
-      } else {
-        btn.textContent = "音アラート OFF";
-        btn.className = "red";
-        status.textContent = "音アラート：OFF。買い優勢・売り優勢サインが出た時に音で知らせたい場合はONにしてください。";
-      }
-    }
-
-    function toggleAutoAnalysis() {
-      autoEnabled = !autoEnabled;
-      if (autoEnabled) {
-        runAnalysis();
-        autoTimer = setInterval(runAnalysis, 5 * 60 * 1000);
-      } else {
-        if (autoTimer) clearInterval(autoTimer);
-        autoTimer = null;
-      }
-      updateAutoButtonView();
-    }
-
-    function toggleSoundAlert() {
-      soundAlertEnabled = !soundAlertEnabled;
-      if (soundAlertEnabled) {
-        unlockAudio();
-        updateAlertButtonView();
-        playAlertSound("test");
-      } else {
-        updateAlertButtonView();
-      }
-    }
-
-    function unlockAudio() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!audioContext) audioContext = new AudioCtx();
-        if (audioContext.state === "suspended") audioContext.resume();
-      } catch (e) {}
-    }
-
-    function playAlertSound(type) {
-      if (!soundAlertEnabled && type !== "test") return;
-      try {
-        unlockAudio();
-        if (!audioContext) return;
-        const now = audioContext.currentTime;
-        const freqs = type === "sell" ? [660, 440, 330] : type === "buy" ? [523, 659, 784] : [440, 660];
-        freqs.forEach((freq, i) => {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(freq, now + i * 0.16);
-          gain.gain.setValueAtTime(0.0001, now + i * 0.16);
-          gain.gain.exponentialRampToValueAtTime(0.18, now + i * 0.16 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.16 + 0.13);
-          osc.connect(gain);
-          gain.connect(audioContext.destination);
-          osc.start(now + i * 0.16);
-          osc.stop(now + i * 0.16 + 0.14);
-        });
-      } catch (e) {}
-    }
-
-    function maybeAlert(judge) {
-      if (!soundAlertEnabled) {
-        lastAlertJudge = judge;
-        return;
-      }
-      const isSignal = judge === "買い優勢" || judge === "売り優勢";
-      const isNewSignal = isSignal && judge !== lastAlertJudge;
-      if (isNewSignal) {
-        playAlertSound(judge === "買い優勢" ? "buy" : "sell");
-      }
-      lastAlertJudge = judge;
-    }
-
-    function recordTrade() {
-      const r = document.getElementById("tradeResult").value;
-      if (r === "win") wins++;
-      if (r === "lose") loses++;
-      if (r === "draw") draws++;
-      totalTrades++;
-      addLog(r);
-      saveStats();
-      updateStatsView();
-    }
-
-    function addLog(result) {
-      const log = document.getElementById("log");
-      const now = new Date();
-      const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け";
-      const item = document.createElement("div");
-      item.className = "logItem";
-      item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分EMA：${lastSnapshot.ema}｜EMA距離：${lastSnapshot.distance}｜5分足：${lastSnapshot.five}`;
-      if (log.textContent === "まだ記録はありません。") log.textContent = "";
-      log.prepend(item);
-    }
-
-    function updateStatsView() {
-      document.getElementById("wins").textContent = wins;
-      document.getElementById("loses").textContent = loses;
-      document.getElementById("draws").textContent = draws;
-      const base = wins + loses;
-      const rate = base === 0 ? 0 : Math.round((wins / base) * 100);
-      document.getElementById("winRate").textContent = rate + "%";
-    }
-
-    function saveStats() {
-      localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, totalTrades }));
-    }
-
-    function loadStats() {
-      try {
-        const raw = localStorage.getItem(STAT_STORAGE);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        wins = data.wins || 0;
-        loses = data.loses || 0;
-        draws = data.draws || 0;
-        totalTrades = data.totalTrades || 0;
-      } catch (e) {}
-    }
-
-    function resetStats() {
-      if (!confirm("記録をリセットしますか？")) return;
-      wins = 0; loses = 0; draws = 0; totalTrades = 0;
-      localStorage.removeItem(STAT_STORAGE);
-      document.getElementById("log").textContent = "まだ記録はありません。";
-      updateStatsView();
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"]/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[s]));
-    }
+    function recordTrade() { const r = document.getElementById("tradeResult").value; if (r === "win") wins++; if (r === "lose") loses++; if (r === "draw") draws++; totalTrades++; addLog(r); saveStats(); updateStatsView(); }
+    function addLog(result) { const log = document.getElementById("log"); const now = new Date(); const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け"; const item = document.createElement("div"); item.className = "logItem"; item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分：${lastSnapshot.env}｜5分：${lastSnapshot.setup}｜1分：${lastSnapshot.one}｜距離：${lastSnapshot.distance}`; if (log.textContent === "まだ記録はありません。") log.textContent = ""; log.prepend(item); }
+    function updateStatsView() { document.getElementById("wins").textContent = wins; document.getElementById("loses").textContent = loses; document.getElementById("draws").textContent = draws; const base = wins + loses; const rate = base === 0 ? 0 : Math.round((wins / base) * 100); document.getElementById("winRate").textContent = rate + "%"; }
+    function saveStats() { localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, totalTrades })); }
+    function loadStats() { try { const raw = localStorage.getItem(STAT_STORAGE); if (!raw) return; const data = JSON.parse(raw); wins = data.wins || 0; loses = data.loses || 0; draws = data.draws || 0; totalTrades = data.totalTrades || 0; } catch(e) {} }
+    function resetStats() { if (!confirm("記録をリセットしますか？")) return; wins = 0; loses = 0; draws = 0; totalTrades = 0; localStorage.removeItem(STAT_STORAGE); document.getElementById("log").textContent = "まだ記録はありません。"; updateStatsView(); }
+    function escapeHtml(str) { return String(str).replace(/[&<>"]/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[s])); }
   </script>
 </body>
 </html>
