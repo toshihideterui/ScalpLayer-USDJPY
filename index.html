@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v2.1</title>
+  <title>ScalpLayer USDJPY v3.0</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -54,19 +54,29 @@
     .reasonList { margin: 10px 0 0; padding-left: 20px; color: var(--muted); }
     .reasonList li { margin-bottom: 6px; }
     .logItem { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 14px; padding: 12px; margin-bottom: 10px; color: var(--muted); font-size: 14px; }
+
+    .positionPanel { background: rgba(2,6,23,.75); border: 1px solid rgba(148,163,184,.25); border-radius: 18px; padding: 16px; margin-top: 12px; }
+    .positionStatus { font-size: 22px; font-weight: 950; margin-bottom: 8px; }
+    .posBuy { color: #fb923c; }
+    .posSell { color: #60a5fa; }
+    .posNeutral { color: var(--muted); }
+    .adviceBox { border-radius: 16px; padding: 14px; margin-top: 12px; font-weight: 800; }
+    .adviceHold { background: rgba(34,197,94,.16); color: #bbf7d0; border: 1px solid rgba(34,197,94,.25); }
+    .adviceTake { background: rgba(250,204,21,.16); color: #fde68a; border: 1px solid rgba(250,204,21,.28); }
+    .adviceCut { background: rgba(239,68,68,.16); color: #fecaca; border: 1px solid rgba(239,68,68,.28); }
     @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v2.1</h1>
+      <h1>ScalpLayer USDJPY v3.0</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v2.1：分析画面を15分足=青、5分足=緑、1分足=オレンジに色分け。見た瞬間にどの時間足の情報か分かるUIに変更しました。</section>
+    <section class="card update">v3.0：エントリー後のポジション管理機能を追加。エントリー価格・経過時間・含み損益pipsから、保有継続・利確・撤退をナビゲーションします。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -102,8 +112,30 @@
       <ul id="reasons" class="reasonList"><li>まだ分析していません。</li></ul>
     </section>
 
+
     <section class="card">
-      <h2>④ トレード記録</h2>
+      <h2>④ ポジション管理</h2>
+      <p class="small">ScalpLayerのサインに従ってエントリーした時に押してください。エントリー価格と時刻を保存し、現在価格との差から保有判断を表示します。</p>
+      <div class="grid">
+        <button class="green" onclick="openPosition('buy')">買いでエントリー</button>
+        <button class="blue" onclick="openPosition('sell')">売りでエントリー</button>
+      </div>
+      <button class="red" onclick="closePosition()">ポジションを終了</button>
+
+      <div class="positionPanel">
+        <div id="positionStatus" class="positionStatus posNeutral">現在ポジション：なし</div>
+        <div class="grid">
+          <div class="statBox">エントリー価格<strong id="entryPriceView">--</strong></div>
+          <div class="statBox">経過時間<strong id="elapsedView">--</strong></div>
+          <div class="statBox">現在損益<strong id="positionPipsView">--</strong></div>
+          <div class="statBox">エントリー時刻<strong id="entryTimeView">--</strong></div>
+        </div>
+        <div id="positionAdvice" class="adviceBox adviceHold">ポジションはまだ記録されていません。</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>⑤ トレード記録</h2>
       <label for="tradeResult">結果</label>
       <select id="tradeResult"><option value="win">勝ち</option><option value="lose">負け</option><option value="draw">引き分け</option></select>
       <button class="blue" onclick="recordTrade()">記録する</button>
@@ -117,9 +149,12 @@
 
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
-    const STAT_STORAGE = "scalplayer_usdjpy_stats_v2_0";
+    const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
+    const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_0";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
+    let activePosition = null;
+    let lastKnownPrice = null;
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
     let lastJudgeText = "判定なし";
     let lastSnapshot = { price: "--", env: "--", setup: "--", one: "--", distance: "--" };
@@ -127,7 +162,7 @@
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      loadStats(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView();
+      loadStats(); loadPosition(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); setInterval(updatePositionPanel, 30000);
     });
 
     function saveApiKey() {
@@ -212,6 +247,9 @@
       try {
         const [series15, series5, series1] = await Promise.all([fetchSeries("15min", 35), fetchSeries("5min", 12), fetchSeries("1min", 30)]);
         const env = analyzeEnvironment(series15); const setup = analyzeSetup(series5); const one = analyzeOneMinute(series1);
+        const livePrice = series1[0] && Number.isFinite(series1[0].close) ? series1[0].close : env.price;
+        env.price = livePrice;
+        lastKnownPrice = livePrice;
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`); reasons.push(...env.reasons); reasons.push(...setup.reasons); reasons.push(...one.reasons);
         badges.push(env.text, setup.text, one.text, one.distance);
@@ -235,6 +273,7 @@
         lastJudgeText = judge; maybeAlert(judge);
         lastSnapshot = { price: env.price.toFixed(3), env: env.text, setup: setup.text, one: one.text, distance: one.distance };
         renderAnalysis(env, setup, one, judge, cls, badges, reasons);
+        updatePositionPanel();
         document.getElementById("lastTime").textContent = "最終分析：" + new Date().toLocaleString(); status.textContent = "分析完了。";
       } catch (e) { console.error(e); status.textContent = "取得失敗：" + e.message; renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]); }
     }
@@ -259,8 +298,95 @@
     function playAlertSound(type) { if (!soundAlertEnabled && type !== "test") return; try { unlockAudio(); if (!audioContext) return; const now = audioContext.currentTime; const freqs = type === "sell" ? [660,440,330] : type === "buy" ? [523,659,784] : [440,660]; freqs.forEach((freq,i) => { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = "sine"; osc.frequency.setValueAtTime(freq, now + i * .16); gain.gain.setValueAtTime(.0001, now + i * .16); gain.gain.exponentialRampToValueAtTime(.18, now + i * .16 + .02); gain.gain.exponentialRampToValueAtTime(.0001, now + i * .16 + .13); osc.connect(gain); gain.connect(audioContext.destination); osc.start(now + i * .16); osc.stop(now + i * .16 + .14); }); } catch(e) {} }
     function maybeAlert(judge) { if (!soundAlertEnabled) { lastAlertJudge = judge; return; } const isSignal = judge === "買い入口" || judge === "売り入口"; if (isSignal && judge !== lastAlertJudge) playAlertSound(judge === "買い入口" ? "buy" : "sell"); lastAlertJudge = judge; }
 
+
+    function openPosition(side) {
+      const price = Number(lastKnownPrice || document.getElementById("currentPrice").textContent);
+      if (!Number.isFinite(price) || price <= 0) {
+        alert("先に自動分析を実行して現在価格を取得してください。");
+        return;
+      }
+      const label = side === "buy" ? "買い" : "売り";
+      if (activePosition && !confirm("現在のポジションを上書きして、" + label + "で記録しますか？")) return;
+      activePosition = {
+        side,
+        entryPrice: price,
+        entryTime: new Date().toISOString(),
+        entryJudge: lastJudgeText
+      };
+      localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
+      updatePositionPanel();
+    }
+
+    function closePosition() {
+      if (!activePosition) { updatePositionPanel(); return; }
+      if (!confirm("ポジション管理を終了しますか？")) return;
+      activePosition = null;
+      localStorage.removeItem(POSITION_STORAGE);
+      updatePositionPanel();
+    }
+
+    function loadPosition() {
+      try {
+        const raw = localStorage.getItem(POSITION_STORAGE);
+        if (!raw) return;
+        activePosition = JSON.parse(raw);
+      } catch(e) { activePosition = null; }
+    }
+
+    function getPositionPips(position, price) {
+      if (!position || !Number.isFinite(price)) return null;
+      return position.side === "buy" ? (price - position.entryPrice) * 100 : (position.entryPrice - price) * 100;
+    }
+
+    function getPositionAdvice(pips, elapsedMin) {
+      if (pips === null) return { text: "現在価格を取得すると、ポジション管理アドバイスを表示します。", cls: "adviceHold" };
+      if (pips <= -5) return { text: "損切り推奨：-5pips付近に到達しています。想定と逆に動いているため、一旦ポジションを切る判断を優先してください。", cls: "adviceCut" };
+      if (pips >= 8) return { text: "利確推奨：+8pips以上に到達しています。スキャルピングとしては十分な利益なので、利確または一部利確を検討してください。", cls: "adviceTake" };
+      if (elapsedMin >= 15 && pips <= 0) return { text: "撤退推奨：15分経過してプラスになっていません。想定した動きが出ていないため、一旦撤退を検討してください。", cls: "adviceCut" };
+      if (elapsedMin >= 15 && pips > 0) return { text: "利確検討：15分経過して利益は出ていますが、スキャルピングとしては長めです。伸びが弱い場合は利益確定を検討してください。", cls: "adviceTake" };
+      if (elapsedMin >= 10 && pips < 2) return { text: "注意：10分経過して伸びが弱い状態です。建値付近での撤退、または次の1分足で判断するのが無難です。", cls: "adviceTake" };
+      if (elapsedMin < 3) return { text: "様子見：エントリー直後です。1分足のノイズに振らされすぎず、-5pips到達までは状況確認です。", cls: "adviceHold" };
+      if (pips > 0) return { text: "保有継続：現在はプラスです。+8pips到達、または15分経過を目安に利確を検討してください。", cls: "adviceHold" };
+      return { text: "反発待ち：まだ損切り水準ではありません。ただし10〜15分たっても伸びない場合は撤退を検討してください。", cls: "adviceHold" };
+    }
+
+    function updatePositionPanel() {
+      const status = document.getElementById("positionStatus");
+      if (!status) return;
+      const entryPriceView = document.getElementById("entryPriceView");
+      const elapsedView = document.getElementById("elapsedView");
+      const pipsView = document.getElementById("positionPipsView");
+      const entryTimeView = document.getElementById("entryTimeView");
+      const adviceView = document.getElementById("positionAdvice");
+      if (!activePosition) {
+        status.textContent = "現在ポジション：なし";
+        status.className = "positionStatus posNeutral";
+        entryPriceView.textContent = "--";
+        elapsedView.textContent = "--";
+        pipsView.textContent = "--";
+        entryTimeView.textContent = "--";
+        adviceView.textContent = "ポジションはまだ記録されていません。サインに従って入った時に、買い/売りエントリーボタンを押してください。";
+        adviceView.className = "adviceBox adviceHold";
+        return;
+      }
+      const entryDate = new Date(activePosition.entryTime);
+      const elapsedMin = Math.max(0, Math.floor((Date.now() - entryDate.getTime()) / 60000));
+      const price = Number(lastKnownPrice || document.getElementById("currentPrice").textContent);
+      const pips = getPositionPips(activePosition, price);
+      const sideLabel = activePosition.side === "buy" ? "買い" : "売り";
+      status.textContent = `現在ポジション：${sideLabel}`;
+      status.className = "positionStatus " + (activePosition.side === "buy" ? "posBuy" : "posSell");
+      entryPriceView.textContent = Number(activePosition.entryPrice).toFixed(3);
+      elapsedView.textContent = `${elapsedMin}分`;
+      pipsView.textContent = pips === null ? "--" : `${pips >= 0 ? "+" : ""}${pips.toFixed(1)}pips`;
+      entryTimeView.textContent = entryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const advice = getPositionAdvice(pips, elapsedMin);
+      adviceView.textContent = advice.text;
+      adviceView.className = "adviceBox " + advice.cls;
+    }
+
     function recordTrade() { const r = document.getElementById("tradeResult").value; if (r === "win") wins++; if (r === "lose") loses++; if (r === "draw") draws++; totalTrades++; addLog(r); saveStats(); updateStatsView(); }
-    function addLog(result) { const log = document.getElementById("log"); const now = new Date(); const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け"; const item = document.createElement("div"); item.className = "logItem"; item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分：${lastSnapshot.env}｜5分：${lastSnapshot.setup}｜1分：${lastSnapshot.one}｜距離：${lastSnapshot.distance}`; if (log.textContent === "まだ記録はありません。") log.textContent = ""; log.prepend(item); }
+    function addLog(result) { const log = document.getElementById("log"); const now = new Date(); const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け"; const item = document.createElement("div"); item.className = "logItem"; const posText = activePosition ? `｜管理中：${activePosition.side === "buy" ? "買い" : "売り"} ${Number(activePosition.entryPrice).toFixed(3)}` : ""; item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分：${lastSnapshot.env}｜5分：${lastSnapshot.setup}｜1分：${lastSnapshot.one}｜距離：${lastSnapshot.distance}${posText}`; if (log.textContent === "まだ記録はありません。") log.textContent = ""; log.prepend(item); }
     function updateStatsView() { document.getElementById("wins").textContent = wins; document.getElementById("loses").textContent = loses; document.getElementById("draws").textContent = draws; const base = wins + loses; const rate = base === 0 ? 0 : Math.round((wins / base) * 100); document.getElementById("winRate").textContent = rate + "%"; }
     function saveStats() { localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, totalTrades })); }
     function loadStats() { try { const raw = localStorage.getItem(STAT_STORAGE); if (!raw) return; const data = JSON.parse(raw); wins = data.wins || 0; loses = data.loses || 0; draws = data.draws || 0; totalTrades = data.totalTrades || 0; } catch(e) {} }
