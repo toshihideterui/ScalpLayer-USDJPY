@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v1.4</title>
+  <title>ScalpLayer USDJPY v1.5</title>
   <style>
     :root {
       --bg1: #006b4f;
@@ -92,7 +92,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v1.4</h1>
+      <h1>ScalpLayer USDJPY v1.5</h1>
       <p class="small">15分足で方向確認、5分足でエントリー判断。TwelveDataで自動分析するドル円スキャルピング補助ツールです。</p>
     </section>
 
@@ -101,7 +101,7 @@
     </section>
 
     <section class="card update">
-      v1.4：20EMAからの距離フィルターを追加しました。飛び乗りを避けるため、EMAから離れすぎたサインは見送りにします。
+      v1.5：押し目待ち・戻り待ち判定を追加しました。方向が合っていても伸びた位置では飛び乗らず、より有利なタイミングを待つ設計にしました。
     </section>
 
     <section class="card">
@@ -310,24 +310,41 @@
         let judge = "見送り";
         let cls = "result wait";
         lastJudgeOk = false;
-        const distanceOk = emaDistance.level !== "far";
+        const buySetup = price > ema20 && emaDir === "up" && five.signal === "buy";
+        const sellSetup = price < ema20 && emaDir === "down" && five.signal === "sell";
 
-        if (price > ema20 && emaDir === "up" && five.signal === "buy" && distanceOk) {
-          judge = "買い優勢";
-          cls = "result buy";
-          lastJudgeOk = true;
-          reasons.push("15分足の上方向、5分足の買い形、EMA距離が許容範囲のため、買い優勢と判定しました。");
-        } else if (price < ema20 && emaDir === "down" && five.signal === "sell" && distanceOk) {
-          judge = "売り優勢";
-          cls = "result sell";
-          lastJudgeOk = true;
-          reasons.push("15分足の下方向、5分足の売り形、EMA距離が許容範囲のため、売り優勢と判定しました。");
-        } else {
-          if (!distanceOk) {
-            reasons.push("方向と5分足の形が揃っていても、20EMAから離れすぎているため、飛び乗り警戒で見送りと判定しました。");
+        if (buySetup) {
+          if (emaDistance.level === "good") {
+            judge = "買い優勢";
+            cls = "result buy";
+            lastJudgeOk = true;
+            reasons.push("15分足の上方向、5分足の買い形、EMA距離が近いため、買い優勢と判定しました。");
+          } else if (emaDistance.level === "caution") {
+            judge = "押し目待ち";
+            cls = "result wait";
+            reasons.push("上方向の条件は揃っていますが、20EMAから少し離れています。今すぐ飛び乗らず、5分足で押し目を待つ判定にしました。");
           } else {
-            reasons.push("15分足の方向と5分足の形が完全には揃っていないため、見送りと判定しました。");
+            judge = "見送り";
+            cls = "result wait";
+            reasons.push("上方向の条件は揃っていますが、20EMAから離れすぎています。伸び切り警戒で見送りと判定しました。");
           }
+        } else if (sellSetup) {
+          if (emaDistance.level === "good") {
+            judge = "売り優勢";
+            cls = "result sell";
+            lastJudgeOk = true;
+            reasons.push("15分足の下方向、5分足の売り形、EMA距離が近いため、売り優勢と判定しました。");
+          } else if (emaDistance.level === "caution") {
+            judge = "戻り待ち";
+            cls = "result wait";
+            reasons.push("下方向の条件は揃っていますが、20EMAから少し離れています。今すぐ飛び乗らず、5分足で戻りを待つ判定にしました。");
+          } else {
+            judge = "見送り";
+            cls = "result wait";
+            reasons.push("下方向の条件は揃っていますが、20EMAから離れすぎています。伸び切り警戒で見送りと判定しました。");
+          }
+        } else {
+          reasons.push("15分足の方向と5分足の形が完全には揃っていないため、見送りと判定しました。");
         }
 
         lastJudgeText = judge;
