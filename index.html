@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.0</title>
+  <title>ScalpLayer USDJPY v3.1</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -64,19 +64,24 @@
     .adviceHold { background: rgba(34,197,94,.16); color: #bbf7d0; border: 1px solid rgba(34,197,94,.25); }
     .adviceTake { background: rgba(250,204,21,.16); color: #fde68a; border: 1px solid rgba(250,204,21,.28); }
     .adviceCut { background: rgba(239,68,68,.16); color: #fecaca; border: 1px solid rgba(239,68,68,.28); }
+    .eventDanger { background: rgba(239,68,68,.18); border: 1px solid rgba(239,68,68,.35); color: #fecaca; border-radius: 16px; padding: 14px; font-weight: 900; margin-top: 10px; }
+    .eventSafe { background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.28); color: #bbf7d0; border-radius: 16px; padding: 14px; font-weight: 900; margin-top: 10px; }
+    .eventItem { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.22); border-radius: 14px; padding: 12px; margin-top: 10px; color: var(--muted); font-size: 14px; }
+    .eventTitle { color: #fff; font-weight: 900; }
+    .orangeBtn { background: var(--orange); color: #fff; }
     @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.0</h1>
+      <h1>ScalpLayer USDJPY v3.1</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.0：エントリー後のポジション管理機能を追加。エントリー価格・経過時間・含み損益pipsから、保有継続・利確・撤退をナビゲーションします。</section>
+    <section class="card update">v3.1：米雇用統計などの重要イベント管理を追加。イベント前後は取引停止判定にし、ポジション保有にも警告を出します。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -87,7 +92,41 @@
     </section>
 
     <section class="card">
-      <h2>② 自動分析</h2>
+      <h2>② 重要イベント管理</h2>
+      <p class="small">米雇用統計・CPI・FOMCなどの前後は、通常のテクニカル判定が効きにくくなるため、売買しない・ポジションを持たない運用を想定します。</p>
+      <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
+
+      <div class="grid">
+        <div>
+          <label for="eventTitle">イベント名</label>
+          <input id="eventTitle" type="text" placeholder="例：米雇用統計 / FOMC / 米CPI" />
+        </div>
+        <div>
+          <label for="eventDateTime">イベント日時</label>
+          <input id="eventDateTime" type="datetime-local" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="guardBefore">何分前から停止</label>
+          <input id="guardBefore" type="number" value="30" min="0" step="5" />
+        </div>
+        <div>
+          <label for="guardAfter">何分後まで停止</label>
+          <input id="guardAfter" type="number" value="30" min="0" step="5" />
+        </div>
+      </div>
+
+      <button class="orangeBtn" onclick="addImportantEvent()">重要イベントを追加</button>
+      <button class="blue" onclick="addPresetEvents()">米雇用統計の候補を追加</button>
+      <button class="red" onclick="clearImportantEvents()">イベントを全削除</button>
+      <p class="small">※米雇用統計は第1金曜の候補日時を自動追加します。CPI・FOMCなど日程が変動するイベントは、経済指標カレンダーを確認して手動登録してください。</p>
+      <div id="eventList" class="small">登録イベントはありません。</div>
+    </section>
+
+    <section class="card">
+      <h2>③ 自動分析</h2>
       <button class="green" onclick="runAnalysis()">USD/JPYを自動分析</button>
       <button id="autoBtn" class="red" onclick="toggleAutoAnalysis()">1分ごと自動分析 OFF</button>
       <button id="alertBtn" class="red" onclick="toggleSoundAlert()">音アラート OFF</button>
@@ -97,7 +136,7 @@
     </section>
 
     <section class="card">
-      <h2>③ 分析結果</h2>
+      <h2>④ 分析結果</h2>
       <div class="grid">
         <div class="statBox colorBox priceBox">現在価格<strong id="currentPrice">--</strong></div>
         <div class="statBox colorBox blueBox"><span class="sectionLabel labelBlue">15分足｜環境認識</span>環境<strong id="envView">--</strong></div>
@@ -114,7 +153,7 @@
 
 
     <section class="card">
-      <h2>④ ポジション管理</h2>
+      <h2>⑤ ポジション管理</h2>
       <p class="small">ScalpLayerのサインに従ってエントリーした時に押してください。エントリー価格と時刻を保存し、現在価格との差から保有判断を表示します。</p>
       <div class="grid">
         <button class="green" onclick="openPosition('buy')">買いでエントリー</button>
@@ -135,7 +174,7 @@
     </section>
 
     <section class="card">
-      <h2>⑤ トレード記録</h2>
+      <h2>⑥ トレード記録</h2>
       <label for="tradeResult">結果</label>
       <select id="tradeResult"><option value="win">勝ち</option><option value="lose">負け</option><option value="draw">引き分け</option></select>
       <button class="blue" onclick="recordTrade()">記録する</button>
@@ -150,10 +189,12 @@
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
-    const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_0";
+    const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_1";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
+    let importantEvents = [];
     let lastKnownPrice = null;
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
     let lastJudgeText = "判定なし";
@@ -162,7 +203,7 @@
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      loadStats(); loadPosition(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); setInterval(updatePositionPanel, 30000);
+      loadStats(); loadPosition(); loadImportantEvents(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
     });
 
     function saveApiKey() {
@@ -270,6 +311,14 @@
         else if (setup.setup === "sell" && one.signal !== "sell") { judge = "売り準備中"; cls = "result prep"; reasons.push("5分足は売り準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
         else { reasons.push("5分足の準備と1分足の入口が揃っていないため、見送りです。"); }
 
+        const eventRisk = getActiveEventRisk();
+        if (eventRisk.active) {
+          judge = "イベント警戒";
+          cls = "result wait";
+          badges.push("重要イベント前後");
+          reasons.push(`${eventRisk.event.title} の前後${eventRisk.before}分/${eventRisk.after}分に入っています。新規売買は停止、保有中なら縮小・撤退を優先してください。`);
+        }
+
         lastJudgeText = judge; maybeAlert(judge);
         lastSnapshot = { price: env.price.toFixed(3), env: env.text, setup: setup.text, one: one.text, distance: one.distance };
         renderAnalysis(env, setup, one, judge, cls, badges, reasons);
@@ -297,6 +346,111 @@
     function unlockAudio() { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return; if (!audioContext) audioContext = new AudioCtx(); if (audioContext.state === "suspended") audioContext.resume(); } catch(e) {} }
     function playAlertSound(type) { if (!soundAlertEnabled && type !== "test") return; try { unlockAudio(); if (!audioContext) return; const now = audioContext.currentTime; const freqs = type === "sell" ? [660,440,330] : type === "buy" ? [523,659,784] : [440,660]; freqs.forEach((freq,i) => { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = "sine"; osc.frequency.setValueAtTime(freq, now + i * .16); gain.gain.setValueAtTime(.0001, now + i * .16); gain.gain.exponentialRampToValueAtTime(.18, now + i * .16 + .02); gain.gain.exponentialRampToValueAtTime(.0001, now + i * .16 + .13); osc.connect(gain); gain.connect(audioContext.destination); osc.start(now + i * .16); osc.stop(now + i * .16 + .14); }); } catch(e) {} }
     function maybeAlert(judge) { if (!soundAlertEnabled) { lastAlertJudge = judge; return; } const isSignal = judge === "買い入口" || judge === "売り入口"; if (isSignal && judge !== lastAlertJudge) playAlertSound(judge === "買い入口" ? "buy" : "sell"); lastAlertJudge = judge; }
+
+
+    function loadImportantEvents() {
+      try {
+        const raw = localStorage.getItem(EVENT_STORAGE);
+        importantEvents = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(importantEvents)) importantEvents = [];
+      } catch(e) { importantEvents = []; }
+      importantEvents = importantEvents.filter(ev => ev && ev.time && new Date(ev.time).getTime() > Date.now() - 24 * 60 * 60000);
+      saveImportantEvents();
+    }
+
+    function saveImportantEvents() { localStorage.setItem(EVENT_STORAGE, JSON.stringify(importantEvents)); }
+
+    function addImportantEvent() {
+      const title = document.getElementById("eventTitle").value.trim() || "重要イベント";
+      const time = document.getElementById("eventDateTime").value;
+      const before = Math.max(0, Number(document.getElementById("guardBefore").value || 30));
+      const after = Math.max(0, Number(document.getElementById("guardAfter").value || 30));
+      if (!time) { alert("イベント日時を入力してください。"); return; }
+      importantEvents.push({ id: Date.now(), title, time: new Date(time).toISOString(), before, after, source: "manual" });
+      importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
+      saveImportantEvents();
+      document.getElementById("eventTitle").value = "";
+      document.getElementById("eventDateTime").value = "";
+      renderEventPanel();
+    }
+
+    function addPresetEvents() {
+      const before = Math.max(0, Number(document.getElementById("guardBefore").value || 30));
+      const after = Math.max(0, Number(document.getElementById("guardAfter").value || 30));
+      const now = new Date();
+      const candidates = [];
+      for (let i = 0; i < 4; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const firstFriday = getFirstFriday(d.getFullYear(), d.getMonth());
+        const hour = isLikelyUsDst(firstFriday) ? 21 : 22;
+        const minute = 30;
+        const eventDate = new Date(firstFriday.getFullYear(), firstFriday.getMonth(), firstFriday.getDate(), hour, minute, 0, 0);
+        if (eventDate.getTime() > now.getTime() - 24 * 60 * 60000) candidates.push(eventDate);
+      }
+      candidates.forEach(dt => {
+        const exists = importantEvents.some(ev => ev.title.includes("米雇用統計") && Math.abs(new Date(ev.time) - dt) < 60 * 60000);
+        if (!exists) importantEvents.push({ id: Date.now() + Math.random(), title: "米雇用統計（候補・要確認）", time: dt.toISOString(), before, after, source: "preset" });
+      });
+      importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
+      saveImportantEvents();
+      renderEventPanel();
+      alert("米雇用統計の候補を追加しました。実際の発表日時は必ず経済指標カレンダーで確認してください。");
+    }
+
+    function getFirstFriday(year, monthIndex) {
+      const d = new Date(year, monthIndex, 1);
+      while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+      return d;
+    }
+
+    function isLikelyUsDst(date) {
+      const m = date.getMonth() + 1;
+      return m >= 3 && m <= 10;
+    }
+
+    function clearImportantEvents() {
+      if (!confirm("登録済みの重要イベントをすべて削除しますか？")) return;
+      importantEvents = [];
+      saveImportantEvents();
+      renderEventPanel();
+    }
+
+    function getActiveEventRisk() {
+      const now = Date.now();
+      let nearest = null;
+      for (const ev of importantEvents) {
+        const t = new Date(ev.time).getTime();
+        const before = Number(ev.before ?? 30);
+        const after = Number(ev.after ?? 30);
+        const diffMin = (now - t) / 60000;
+        const active = diffMin >= -before && diffMin <= after;
+        const distance = Math.abs(diffMin);
+        if (active && (!nearest || distance < nearest.distance)) nearest = { active: true, event: ev, before, after, diffMin, distance };
+      }
+      return nearest || { active: false };
+    }
+
+    function renderEventPanel() {
+      const risk = getActiveEventRisk();
+      const status = document.getElementById("eventRiskStatus");
+      if (status) {
+        if (risk.active) {
+          const mins = Math.round(risk.diffMin);
+          status.className = "eventDanger";
+          status.textContent = `重要イベント警戒中：${risk.event.title}（${mins >= 0 ? "発表後" + mins + "分" : "発表前" + Math.abs(mins) + "分"}）新規売買・保有は避ける時間帯です。`;
+        } else {
+          status.className = "eventSafe";
+          status.textContent = "重要イベント警戒なし";
+        }
+      }
+      const list = document.getElementById("eventList");
+      if (!list) return;
+      if (!importantEvents.length) { list.textContent = "登録イベントはありません。"; return; }
+      list.innerHTML = importantEvents.map(ev => {
+        const dt = new Date(ev.time);
+        return `<div class="eventItem"><div class="eventTitle">${escapeHtml(ev.title)}</div>${dt.toLocaleString()}<br>停止時間：前${Number(ev.before ?? 30)}分 / 後${Number(ev.after ?? 30)}分</div>`;
+      }).join("");
+    }
 
 
     function openPosition(side) {
@@ -339,6 +493,8 @@
     }
 
     function getPositionAdvice(pips, elapsedMin) {
+      const eventRisk = getActiveEventRisk();
+      if (eventRisk.active) return { text: `重要イベント警戒：${eventRisk.event.title} の前後です。スキャルピングでは新規売買を避け、保有中なら決済・縮小を優先してください。`, cls: "adviceCut" };
       if (pips === null) return { text: "現在価格を取得すると、ポジション管理アドバイスを表示します。", cls: "adviceHold" };
       if (pips <= -5) return { text: "損切り推奨：-5pips付近に到達しています。想定と逆に動いているため、一旦ポジションを切る判断を優先してください。", cls: "adviceCut" };
       if (pips >= 8) return { text: "利確推奨：+8pips以上に到達しています。スキャルピングとしては十分な利益なので、利確または一部利確を検討してください。", cls: "adviceTake" };
