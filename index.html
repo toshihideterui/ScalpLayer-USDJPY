@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.3</title>
+  <title>ScalpLayer USDJPY v3.4</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -47,7 +47,7 @@
     .greenBox { background: linear-gradient(135deg, var(--green-main), var(--green-deep)); }
     .orangeBox { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); }
     .sectionLabel { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-weight: 900; font-size: 13px; margin-bottom: 8px; }
-    .analysisHeader { display: flex; align-items: center; gap: 24px; margin-bottom: 10px; }
+    .analysisHeader { display: flex; align-items: center; gap: 40px; margin-bottom: 10px; }
     .analysisTitle { font-size: 18px; font-weight: 900; color: #fff; line-height: 1; white-space: nowrap; }
     .labelBlue { background: var(--blue-soft); color: var(--blue-deep); }
     .labelGreen { background: var(--green-soft); color: var(--green-deep); }
@@ -77,13 +77,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.3</h1>
+      <h1>ScalpLayer USDJPY v3.4</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.3：平均足トレンド判定を追加。15分足の平均足方向、5分足の平均足反転、ヒゲなし平均足、EMA20との位置関係をスコアに反映しました。</section>
+    <section class="card update">v3.4：平均足スコアを主役に変更。15分足・5分足の平均足、ヒゲなし本数、EMA20位置、1分足入口を合算し「強い買い／買い優勢／様子見／売り優勢／強い売り」で表示します。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -143,6 +143,13 @@
         <div class="statBox colorBox priceBox">
           現在価格
           <strong id="currentPrice">--</strong>
+        </div>
+        <div class="statBox colorBox priceBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelBlue">平均足｜総合</span>
+            <span class="analysisTitle">スコア</span>
+          </div>
+          <strong id="haScoreView">--</strong>
         </div>
         <div class="statBox colorBox blueBox">
           <div class="analysisHeader">
@@ -322,6 +329,24 @@
       return Math.abs(candle.high - Math.max(candle.open, candle.close)) < 0.001;
     }
 
+    function countNoWickStreak(haSeries, direction) {
+      if (!haSeries || !haSeries.length) return 0;
+      let count = 0;
+      for (const candle of haSeries) {
+        if (getHeikinAshiDirection(candle) !== direction) break;
+        if (direction === "bull" && hasNoLowerWick(candle)) count++;
+        else if (direction === "bear" && hasNoUpperWick(candle)) count++;
+        else break;
+      }
+      return count;
+    }
+
+    function formatHaText(direction, streakCount, noWickCount) {
+      const base = direction === "bull" ? `陽線${streakCount}本` : direction === "bear" ? `陰線${streakCount}本` : "方向弱い";
+      if (noWickCount > 0) return `${base} / ヒゲ無し${noWickCount}本`;
+      return base;
+    }
+
     function analyzeHeikinAshi15(series15) {
       const ha = calculateHeikinAshi(series15);
       const latest = ha[0], prev = ha[1];
@@ -330,15 +355,16 @@
       const reasons = [];
       let bias = "range";
       let text = "方向弱い";
+      let noWickCount = countNoWickStreak(ha, direction);
 
       if (direction === "bull") {
         bias = "up";
-        text = `陽線${streak.count}本`;
+        text = formatHaText(direction, streak.count, noWickCount);
         reasons.push(`15分足の平均足は陽線が${streak.count}本連続しています。買い方向の流れを優先します。`);
         if (hasNoLowerWick(latest)) reasons.push("15分足の最新平均足は下ヒゲがほぼありません。上昇圧力が強めです。");
       } else if (direction === "bear") {
         bias = "down";
-        text = `陰線${streak.count}本`;
+        text = formatHaText(direction, streak.count, noWickCount);
         reasons.push(`15分足の平均足は陰線が${streak.count}本連続しています。売り方向の流れを優先します。`);
         if (hasNoUpperWick(latest)) reasons.push("15分足の最新平均足は上ヒゲがほぼありません。下降圧力が強めです。");
       } else {
@@ -351,7 +377,7 @@
         if (prevDirection === "bull" && direction === "bear") reasons.push("15分足の平均足が陽線から陰線へ転換しています。売り目線への切り替わり候補です。");
       }
 
-      return { bias, text, latest, streak, reasons };
+      return { bias, text, latest, streak, noWickCount, reasons };
     }
 
     function analyzeHeikinAshi5(series5) {
@@ -398,7 +424,10 @@
         reasons.push("5分足の平均足は上ヒゲがほぼありません。売りの勢いを加点します。");
       }
 
-      return { signal, text, strength, latest, streak, reasons };
+      const noWickCount = countNoWickStreak(ha.slice(1), direction);
+      if (direction === "bull" || direction === "bear") text = formatHaText(direction, streak.count, noWickCount);
+
+      return { signal, text, strength, latest, streak, noWickCount, reasons };
     }
 
     function analyzeEnvironment(series15) {
@@ -453,6 +482,42 @@
       reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, distance, level, reasons };
     }
 
+    function calculateHaTrendScore(env, setup, one, ha15, ha5) {
+      let score = 0;
+      const details = [];
+
+      if (ha15.bias === "up") { score += ha15.streak.count >= 3 ? 2 : 1; details.push(`15分平均足：+${ha15.streak.count >= 3 ? 2 : 1}`); }
+      if (ha15.bias === "down") { score -= ha15.streak.count >= 3 ? 2 : 1; details.push(`15分平均足：-${ha15.streak.count >= 3 ? 2 : 1}`); }
+
+      const ha15WickBonus = Math.min(ha15.noWickCount || 0, 2);
+      if (ha15.bias === "up" && ha15WickBonus) { score += ha15WickBonus; details.push(`15分ヒゲ無し：+${ha15WickBonus}`); }
+      if (ha15.bias === "down" && ha15WickBonus) { score -= ha15WickBonus; details.push(`15分ヒゲ無し：-${ha15WickBonus}`); }
+
+      if (env.env === "up") { score += 1; details.push("EMA環境：+1"); }
+      if (env.env === "down") { score -= 1; details.push("EMA環境：-1"); }
+
+      if (ha5.signal === "buy") { score += Math.min(ha5.strength || 1, 2); details.push(`5分平均足：+${Math.min(ha5.strength || 1, 2)}`); }
+      if (ha5.signal === "sell") { score -= Math.min(ha5.strength || 1, 2); details.push(`5分平均足：-${Math.min(ha5.strength || 1, 2)}`); }
+
+      const ha5WickBonus = Math.min(ha5.noWickCount || 0, 1);
+      if (ha5.signal === "buy" && ha5WickBonus) { score += ha5WickBonus; details.push(`5分ヒゲ無し：+${ha5WickBonus}`); }
+      if (ha5.signal === "sell" && ha5WickBonus) { score -= ha5WickBonus; details.push(`5分ヒゲ無し：-${ha5WickBonus}`); }
+
+      if (setup.setup === "buy") { score += 1; details.push("5分準備：+1"); }
+      if (setup.setup === "sell") { score -= 1; details.push("5分準備：-1"); }
+      if (one.signal === "buy") { score += 1; details.push("1分入口：+1"); }
+      if (one.signal === "sell") { score -= 1; details.push("1分入口：-1"); }
+
+      let text = "様子見";
+      let direction = "none";
+      if (score >= 4) { text = "強い買い"; direction = "buy"; }
+      else if (score >= 2) { text = "買い優勢"; direction = "buy"; }
+      else if (score <= -4) { text = "強い売り"; direction = "sell"; }
+      else if (score <= -2) { text = "売り優勢"; direction = "sell"; }
+
+      return { score, text, direction, details };
+    }
+
     async function runAnalysis() {
       const status = document.getElementById("status"); status.textContent = "取得・分析中...";
       try {
@@ -461,28 +526,38 @@
         const livePrice = series1[0] && Number.isFinite(series1[0].close) ? series1[0].close : env.price;
         env.price = livePrice;
         lastKnownPrice = livePrice;
+
+        const trend = calculateHaTrendScore(env, setup, one, ha15, ha5);
         const reasons = []; const badges = [];
-        reasons.push(`現在価格は ${env.price.toFixed(3)} です。`); reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        badges.push(env.text, "平均足15分：" + ha15.text, setup.text, "平均足5分：" + ha5.text, one.text, one.distance);
+        reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
+        reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
+        reasons.push(`v3.4平均足スコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        badges.push(trend.text, `平均足スコア：${trend.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
 
         let judge = "見送り"; let cls = "result wait";
-        const buyScore = (env.env === "up" ? 2 : env.env === "range" ? 0 : -3) + (ha15.bias === "up" ? 2 : ha15.bias === "down" ? -3 : 0) + (setup.setup === "buy" ? 2 : 0) + (ha5.signal === "buy" ? ha5.strength : 0) + (one.signal === "buy" ? 2 : 0);
-        const sellScore = (env.env === "down" ? 2 : env.env === "range" ? 0 : -3) + (ha15.bias === "down" ? 2 : ha15.bias === "up" ? -3 : 0) + (setup.setup === "sell" ? 2 : 0) + (ha5.signal === "sell" ? ha5.strength : 0) + (one.signal === "sell" ? 2 : 0);
-        const buyReady = buyScore >= 7 && buyScore > sellScore && one.signal === "buy" && ha15.bias !== "down";
-        const sellReady = sellScore >= 7 && sellScore > buyScore && one.signal === "sell" && ha15.bias !== "up";
-        reasons.push(`v3.3平均足スコア：買い${buyScore} / 売り${sellScore}です。`);
+        const buyReady = trend.direction === "buy" && trend.score >= 4 && one.signal === "buy" && ha15.bias !== "down";
+        const sellReady = trend.direction === "sell" && trend.score <= -4 && one.signal === "sell" && ha15.bias !== "up";
 
-        if (env.env === "range") reasons.push("15分足がレンジ寄りなので、サインが出てもロットを落とす・見送るなど慎重運用が前提です。");
+        if (trend.direction === "buy" && one.signal !== "buy") {
+          judge = trend.score >= 4 ? "買い優勢・入口待ち" : "買い様子見";
+          cls = "result prep";
+          reasons.push("平均足は買い優勢ですが、1分足の入口がまだ揃っていません。飛び乗りを避けて入口待ちです。");
+        } else if (trend.direction === "sell" && one.signal !== "sell") {
+          judge = trend.score <= -4 ? "売り優勢・入口待ち" : "売り様子見";
+          cls = "result prep";
+          reasons.push("平均足は売り優勢ですが、1分足の入口がまだ揃っていません。飛び乗りを避けて入口待ちです。");
+        }
 
         if (buyReady) {
-          if (one.level === "far") { judge = "押し目待ち"; cls = "result prep"; reasons.push("1分足の買い入口はありますが、9EMAから離れすぎています。飛び乗りを避けて押し目待ちにしました。"); }
-          else { judge = "買い入口"; cls = "result buy"; reasons.push("5分足の買い準備に対して、1分足の買い入口が出ています。v3.3ではここを平均足込みのエントリー候補として扱います。"); }
+          if (one.level === "far") { judge = "押し目待ち"; cls = "result prep"; reasons.push("平均足スコアは買い優勢ですが、1分足9EMAから離れすぎています。飛び乗りを避けて押し目待ちにしました。"); }
+          else { judge = trend.text === "強い買い" ? "強い買い入口" : "買い入口"; cls = "result buy"; reasons.push("平均足スコア、5分足方向、1分足入口が買いで揃っています。v3.4ではここを買い候補として扱います。"); }
         } else if (sellReady) {
-          if (one.level === "far") { judge = "戻り待ち"; cls = "result prep"; reasons.push("1分足の売り入口はありますが、9EMAから離れすぎています。飛び乗りを避けて戻り待ちにしました。"); }
-          else { judge = "売り入口"; cls = "result sell"; reasons.push("5分足の売り準備に対して、1分足の売り入口が出ています。v3.3ではここを平均足込みのエントリー候補として扱います。"); }
-        } else if (setup.setup === "buy" && one.signal !== "buy") { judge = "買い準備中"; cls = "result prep"; reasons.push("5分足は買い準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
-        else if (setup.setup === "sell" && one.signal !== "sell") { judge = "売り準備中"; cls = "result prep"; reasons.push("5分足は売り準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
-        else { reasons.push("5分足の準備と1分足の入口が揃っていないため、見送りです。"); }
+          if (one.level === "far") { judge = "戻り待ち"; cls = "result prep"; reasons.push("平均足スコアは売り優勢ですが、1分足9EMAから離れすぎています。飛び乗りを避けて戻り待ちにしました。"); }
+          else { judge = trend.text === "強い売り" ? "強い売り入口" : "売り入口"; cls = "result sell"; reasons.push("平均足スコア、5分足方向、1分足入口が売りで揃っています。v3.4ではここを売り候補として扱います。"); }
+        } else if (judge === "見送り") {
+          if (Math.abs(trend.score) <= 1) reasons.push("平均足スコアが中立圏です。方向が噛み合うまで見送りです。");
+          else reasons.push("平均足スコアは傾いていますが、エントリー条件が完全には揃っていません。");
+        }
 
         const eventRisk = getActiveEventRisk();
         if (eventRisk.active) {
@@ -493,15 +568,16 @@
         }
 
         lastJudgeText = judge; maybeAlert(judge);
-        lastSnapshot = { price: env.price.toFixed(3), env: env.text + " / 平均足:" + ha15.text, setup: setup.text + " / 平均足:" + ha5.text, one: one.text, distance: one.distance };
-        renderAnalysis(env, setup, one, ha15, ha5, judge, cls, badges, reasons);
+        lastSnapshot = { price: env.price.toFixed(3), env: env.text + " / 平均足:" + ha15.text + " / 総合:" + trend.text, setup: setup.text + " / 平均足:" + ha5.text, one: one.text, distance: one.distance };
+        renderAnalysis(env, setup, one, ha15, ha5, trend, judge, cls, badges, reasons);
         updatePositionPanel();
         document.getElementById("lastTime").textContent = "最終分析：" + new Date().toLocaleString(); status.textContent = "分析完了。";
       } catch (e) { console.error(e); status.textContent = "取得失敗：" + e.message; renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]); }
     }
 
-    function renderAnalysis(env, setup, one, ha15, ha5, judge, cls, badges, reasons) {
+    function renderAnalysis(env, setup, one, ha15, ha5, trend, judge, cls, badges, reasons) {
       document.getElementById("currentPrice").textContent = env.price.toFixed(3);
+      document.getElementById("haScoreView").textContent = `${trend.text} ${trend.score > 0 ? "+" : ""}${trend.score}`;
       document.getElementById("envView").textContent = env.text;
       document.getElementById("ema20View").textContent = env.ema20.toFixed(3);
       document.getElementById("ha15View").textContent = ha15.text;
@@ -520,7 +596,7 @@
     function toggleSoundAlert() { soundAlertEnabled = !soundAlertEnabled; if (soundAlertEnabled) { unlockAudio(); updateAlertButtonView(); playAlertSound("test"); } else updateAlertButtonView(); }
     function unlockAudio() { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return; if (!audioContext) audioContext = new AudioCtx(); if (audioContext.state === "suspended") audioContext.resume(); } catch(e) {} }
     function playAlertSound(type) { if (!soundAlertEnabled && type !== "test") return; try { unlockAudio(); if (!audioContext) return; const now = audioContext.currentTime; const freqs = type === "sell" ? [660,440,330] : type === "buy" ? [523,659,784] : [440,660]; freqs.forEach((freq,i) => { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); osc.type = "sine"; osc.frequency.setValueAtTime(freq, now + i * .16); gain.gain.setValueAtTime(.0001, now + i * .16); gain.gain.exponentialRampToValueAtTime(.18, now + i * .16 + .02); gain.gain.exponentialRampToValueAtTime(.0001, now + i * .16 + .13); osc.connect(gain); gain.connect(audioContext.destination); osc.start(now + i * .16); osc.stop(now + i * .16 + .14); }); } catch(e) {} }
-    function maybeAlert(judge) { if (!soundAlertEnabled) { lastAlertJudge = judge; return; } const isSignal = judge === "買い入口" || judge === "売り入口"; if (isSignal && judge !== lastAlertJudge) playAlertSound(judge === "買い入口" ? "buy" : "sell"); lastAlertJudge = judge; }
+    function maybeAlert(judge) { if (!soundAlertEnabled) { lastAlertJudge = judge; return; } const isSignal = judge === "買い入口" || judge === "売り入口" || judge === "強い買い入口" || judge === "強い売り入口"; if (isSignal && judge !== lastAlertJudge) playAlertSound(judge.includes("買い") ? "buy" : "sell"); lastAlertJudge = judge; }
 
 
     function loadImportantEvents() {
