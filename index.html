@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.1</title>
+  <title>ScalpLayer USDJPY v3.2</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -47,6 +47,8 @@
     .greenBox { background: linear-gradient(135deg, var(--green-main), var(--green-deep)); }
     .orangeBox { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); }
     .sectionLabel { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-weight: 900; font-size: 13px; margin-bottom: 8px; }
+    .analysisHeader { display: flex; align-items: center; gap: 24px; margin-bottom: 10px; }
+    .analysisTitle { font-size: 18px; font-weight: 900; color: #fff; line-height: 1; white-space: nowrap; }
     .labelBlue { background: var(--blue-soft); color: var(--blue-deep); }
     .labelGreen { background: var(--green-soft); color: var(--green-deep); }
     .labelOrange { background: var(--orange-soft); color: var(--orange-deep); }
@@ -75,13 +77,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.1</h1>
+      <h1>ScalpLayer USDJPY v3.2</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.1：米雇用統計などの重要イベント管理を追加。イベント前後は取引停止判定にし、ポジション保有にも警告を出します。</section>
+    <section class="card update">v3.2：分析結果カードの表示を調整。丸枠ラベルと右側の文字の間隔を広げ、スマホでも見やすくしました。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -138,12 +140,45 @@
     <section class="card">
       <h2>④ 分析結果</h2>
       <div class="grid">
-        <div class="statBox colorBox priceBox">現在価格<strong id="currentPrice">--</strong></div>
-        <div class="statBox colorBox blueBox"><span class="sectionLabel labelBlue">15分足｜環境認識</span>環境<strong id="envView">--</strong></div>
-        <div class="statBox colorBox blueBox"><span class="sectionLabel labelBlue">15分足｜20EMA</span>基準線<strong id="ema20View">--</strong></div>
-        <div class="statBox colorBox greenBox"><span class="sectionLabel labelGreen">5分足｜準備状態</span>状態<strong id="setupView">--</strong></div>
-        <div class="statBox colorBox orangeBox"><span class="sectionLabel labelOrange">1分足｜エントリー判定</span>確定足<strong id="oneSignalView">--</strong></div>
-        <div class="statBox colorBox orangeBox"><span class="sectionLabel labelOrange">1分足｜EMA距離</span>距離<strong id="oneDistanceView">--</strong></div>
+        <div class="statBox colorBox priceBox">
+          現在価格
+          <strong id="currentPrice">--</strong>
+        </div>
+        <div class="statBox colorBox blueBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelBlue">15分足｜環境認識</span>
+            <span class="analysisTitle">環境</span>
+          </div>
+          <strong id="envView">--</strong>
+        </div>
+        <div class="statBox colorBox blueBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelBlue">15分足｜20EMA</span>
+            <span class="analysisTitle">基準線</span>
+          </div>
+          <strong id="ema20View">--</strong>
+        </div>
+        <div class="statBox colorBox greenBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelGreen">5分足｜準備状態</span>
+            <span class="analysisTitle">状態</span>
+          </div>
+          <strong id="setupView">--</strong>
+        </div>
+        <div class="statBox colorBox orangeBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelOrange">1分足｜エントリー判定</span>
+            <span class="analysisTitle">確定足</span>
+          </div>
+          <strong id="oneSignalView">--</strong>
+        </div>
+        <div class="statBox colorBox orangeBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelOrange">1分足｜EMA距離</span>
+            <span class="analysisTitle">距離</span>
+          </div>
+          <strong id="oneDistanceView">--</strong>
+        </div>
       </div>
       <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
