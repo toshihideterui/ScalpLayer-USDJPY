@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.2</title>
+  <title>ScalpLayer USDJPY v3.3</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -77,13 +77,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.2</h1>
+      <h1>ScalpLayer USDJPY v3.3</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.2：分析結果カードの表示を調整。丸枠ラベルと右側の文字の間隔を広げ、スマホでも見やすくしました。</section>
+    <section class="card update">v3.3：平均足トレンド判定を追加。15分足の平均足方向、5分足の平均足反転、ヒゲなし平均足、EMA20との位置関係をスコアに反映しました。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -157,6 +157,20 @@
             <span class="analysisTitle">基準線</span>
           </div>
           <strong id="ema20View">--</strong>
+        </div>
+        <div class="statBox colorBox blueBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelBlue">15分足｜平均足</span>
+            <span class="analysisTitle">方向</span>
+          </div>
+          <strong id="ha15View">--</strong>
+        </div>
+        <div class="statBox colorBox greenBox">
+          <div class="analysisHeader">
+            <span class="sectionLabel labelGreen">5分足｜平均足</span>
+            <span class="analysisTitle">反転</span>
+          </div>
+          <strong id="ha5View">--</strong>
         </div>
         <div class="statBox colorBox greenBox">
           <div class="analysisHeader">
@@ -266,6 +280,127 @@
     }
     function calculatePreviousEMA(values, period) { if (values.length <= period) return null; return calculateEMA(values.slice(1), period); }
 
+    function calculateHeikinAshi(values) {
+      const chronological = values.slice().reverse();
+      const result = [];
+      chronological.forEach((v, index) => {
+        const haClose = (v.open + v.high + v.low + v.close) / 4;
+        const haOpen = index === 0 ? (v.open + v.close) / 2 : (result[index - 1].open + result[index - 1].close) / 2;
+        const haHigh = Math.max(v.high, haOpen, haClose);
+        const haLow = Math.min(v.low, haOpen, haClose);
+        result.push({ time: v.time, open: haOpen, high: haHigh, low: haLow, close: haClose });
+      });
+      return result.reverse();
+    }
+
+    function getHeikinAshiDirection(candle) {
+      if (!candle) return "none";
+      if (candle.close > candle.open) return "bull";
+      if (candle.close < candle.open) return "bear";
+      return "flat";
+    }
+
+    function countHeikinAshiStreak(haSeries) {
+      if (!haSeries || !haSeries.length) return { direction: "none", count: 0 };
+      const direction = getHeikinAshiDirection(haSeries[0]);
+      if (direction === "none" || direction === "flat") return { direction, count: 0 };
+      let count = 0;
+      for (const candle of haSeries) {
+        if (getHeikinAshiDirection(candle) !== direction) break;
+        count++;
+      }
+      return { direction, count };
+    }
+
+    function hasNoLowerWick(candle) {
+      if (!candle) return false;
+      return Math.abs(candle.low - Math.min(candle.open, candle.close)) < 0.001;
+    }
+
+    function hasNoUpperWick(candle) {
+      if (!candle) return false;
+      return Math.abs(candle.high - Math.max(candle.open, candle.close)) < 0.001;
+    }
+
+    function analyzeHeikinAshi15(series15) {
+      const ha = calculateHeikinAshi(series15);
+      const latest = ha[0], prev = ha[1];
+      const streak = countHeikinAshiStreak(ha);
+      const direction = getHeikinAshiDirection(latest);
+      const reasons = [];
+      let bias = "range";
+      let text = "方向弱い";
+
+      if (direction === "bull") {
+        bias = "up";
+        text = `陽線${streak.count}本`;
+        reasons.push(`15分足の平均足は陽線が${streak.count}本連続しています。買い方向の流れを優先します。`);
+        if (hasNoLowerWick(latest)) reasons.push("15分足の最新平均足は下ヒゲがほぼありません。上昇圧力が強めです。");
+      } else if (direction === "bear") {
+        bias = "down";
+        text = `陰線${streak.count}本`;
+        reasons.push(`15分足の平均足は陰線が${streak.count}本連続しています。売り方向の流れを優先します。`);
+        if (hasNoUpperWick(latest)) reasons.push("15分足の最新平均足は上ヒゲがほぼありません。下降圧力が強めです。");
+      } else {
+        reasons.push("15分足の平均足は方向感が弱く、レンジ警戒です。");
+      }
+
+      if (prev) {
+        const prevDirection = getHeikinAshiDirection(prev);
+        if (prevDirection === "bear" && direction === "bull") reasons.push("15分足の平均足が陰線から陽線へ転換しています。買い目線への切り替わり候補です。");
+        if (prevDirection === "bull" && direction === "bear") reasons.push("15分足の平均足が陽線から陰線へ転換しています。売り目線への切り替わり候補です。");
+      }
+
+      return { bias, text, latest, streak, reasons };
+    }
+
+    function analyzeHeikinAshi5(series5) {
+      const ha = calculateHeikinAshi(series5);
+      const latest = ha[1], prev = ha[2];
+      const streak = countHeikinAshiStreak(ha.slice(1));
+      const direction = getHeikinAshiDirection(latest);
+      const prevDirection = getHeikinAshiDirection(prev);
+      const reasons = ["5分足の平均足も未確定足を使わず、1本前の確定足で見ています。"];
+      let signal = "none";
+      let text = "反転なし";
+      let strength = 0;
+
+      if (prevDirection === "bear" && direction === "bull") {
+        signal = "buy";
+        text = "陽転";
+        strength += 2;
+        reasons.push("5分足の平均足が陰線から陽線へ変わりました。買い準備の加点です。");
+      } else if (prevDirection === "bull" && direction === "bear") {
+        signal = "sell";
+        text = "陰転";
+        strength += 2;
+        reasons.push("5分足の平均足が陽線から陰線へ変わりました。売り準備の加点です。");
+      } else if (direction === "bull") {
+        signal = "buy";
+        text = `陽線${streak.count}本`;
+        strength += streak.count >= 3 ? 2 : 1;
+        reasons.push(`5分足の平均足は陽線が${streak.count}本連続しています。買いの流れが続いています。`);
+      } else if (direction === "bear") {
+        signal = "sell";
+        text = `陰線${streak.count}本`;
+        strength += streak.count >= 3 ? 2 : 1;
+        reasons.push(`5分足の平均足は陰線が${streak.count}本連続しています。売りの流れが続いています。`);
+      } else {
+        reasons.push("5分足の平均足は方向感が弱い状態です。");
+      }
+
+      if (signal === "buy" && hasNoLowerWick(latest)) {
+        strength++;
+        reasons.push("5分足の平均足は下ヒゲがほぼありません。買いの勢いを加点します。");
+      }
+      if (signal === "sell" && hasNoUpperWick(latest)) {
+        strength++;
+        reasons.push("5分足の平均足は上ヒゲがほぼありません。売りの勢いを加点します。");
+      }
+
+      return { signal, text, strength, latest, streak, reasons };
+    }
+
     function analyzeEnvironment(series15) {
       const latest = series15[0]; const ema20 = calculateEMA(series15, 20); const prevEma20 = calculatePreviousEMA(series15, 20);
       if (!latest || ema20 === null || prevEma20 === null) throw new Error("15分足のEMA計算に必要なデータが不足しています。");
@@ -322,26 +457,29 @@
       const status = document.getElementById("status"); status.textContent = "取得・分析中...";
       try {
         const [series15, series5, series1] = await Promise.all([fetchSeries("15min", 35), fetchSeries("5min", 12), fetchSeries("1min", 30)]);
-        const env = analyzeEnvironment(series15); const setup = analyzeSetup(series5); const one = analyzeOneMinute(series1);
+        const env = analyzeEnvironment(series15); const ha15 = analyzeHeikinAshi15(series15); const setup = analyzeSetup(series5); const ha5 = analyzeHeikinAshi5(series5); const one = analyzeOneMinute(series1);
         const livePrice = series1[0] && Number.isFinite(series1[0].close) ? series1[0].close : env.price;
         env.price = livePrice;
         lastKnownPrice = livePrice;
         const reasons = []; const badges = [];
-        reasons.push(`現在価格は ${env.price.toFixed(3)} です。`); reasons.push(...env.reasons); reasons.push(...setup.reasons); reasons.push(...one.reasons);
-        badges.push(env.text, setup.text, one.text, one.distance);
+        reasons.push(`現在価格は ${env.price.toFixed(3)} です。`); reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
+        badges.push(env.text, "平均足15分：" + ha15.text, setup.text, "平均足5分：" + ha5.text, one.text, one.distance);
 
         let judge = "見送り"; let cls = "result wait";
-        const buyReady = env.env !== "down" && setup.setup === "buy" && one.signal === "buy";
-        const sellReady = env.env !== "up" && setup.setup === "sell" && one.signal === "sell";
+        const buyScore = (env.env === "up" ? 2 : env.env === "range" ? 0 : -3) + (ha15.bias === "up" ? 2 : ha15.bias === "down" ? -3 : 0) + (setup.setup === "buy" ? 2 : 0) + (ha5.signal === "buy" ? ha5.strength : 0) + (one.signal === "buy" ? 2 : 0);
+        const sellScore = (env.env === "down" ? 2 : env.env === "range" ? 0 : -3) + (ha15.bias === "down" ? 2 : ha15.bias === "up" ? -3 : 0) + (setup.setup === "sell" ? 2 : 0) + (ha5.signal === "sell" ? ha5.strength : 0) + (one.signal === "sell" ? 2 : 0);
+        const buyReady = buyScore >= 7 && buyScore > sellScore && one.signal === "buy" && ha15.bias !== "down";
+        const sellReady = sellScore >= 7 && sellScore > buyScore && one.signal === "sell" && ha15.bias !== "up";
+        reasons.push(`v3.3平均足スコア：買い${buyScore} / 売り${sellScore}です。`);
 
         if (env.env === "range") reasons.push("15分足がレンジ寄りなので、サインが出てもロットを落とす・見送るなど慎重運用が前提です。");
 
         if (buyReady) {
           if (one.level === "far") { judge = "押し目待ち"; cls = "result prep"; reasons.push("1分足の買い入口はありますが、9EMAから離れすぎています。飛び乗りを避けて押し目待ちにしました。"); }
-          else { judge = "買い入口"; cls = "result buy"; reasons.push("5分足の買い準備に対して、1分足の買い入口が出ています。v2.0ではここをエントリー候補として扱います。"); }
+          else { judge = "買い入口"; cls = "result buy"; reasons.push("5分足の買い準備に対して、1分足の買い入口が出ています。v3.3ではここを平均足込みのエントリー候補として扱います。"); }
         } else if (sellReady) {
           if (one.level === "far") { judge = "戻り待ち"; cls = "result prep"; reasons.push("1分足の売り入口はありますが、9EMAから離れすぎています。飛び乗りを避けて戻り待ちにしました。"); }
-          else { judge = "売り入口"; cls = "result sell"; reasons.push("5分足の売り準備に対して、1分足の売り入口が出ています。v2.0ではここをエントリー候補として扱います。"); }
+          else { judge = "売り入口"; cls = "result sell"; reasons.push("5分足の売り準備に対して、1分足の売り入口が出ています。v3.3ではここを平均足込みのエントリー候補として扱います。"); }
         } else if (setup.setup === "buy" && one.signal !== "buy") { judge = "買い準備中"; cls = "result prep"; reasons.push("5分足は買い準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
         else if (setup.setup === "sell" && one.signal !== "sell") { judge = "売り準備中"; cls = "result prep"; reasons.push("5分足は売り準備ですが、1分足の入口がまだ出ていません。早乗りせず待ちです。"); }
         else { reasons.push("5分足の準備と1分足の入口が揃っていないため、見送りです。"); }
@@ -355,17 +493,19 @@
         }
 
         lastJudgeText = judge; maybeAlert(judge);
-        lastSnapshot = { price: env.price.toFixed(3), env: env.text, setup: setup.text, one: one.text, distance: one.distance };
-        renderAnalysis(env, setup, one, judge, cls, badges, reasons);
+        lastSnapshot = { price: env.price.toFixed(3), env: env.text + " / 平均足:" + ha15.text, setup: setup.text + " / 平均足:" + ha5.text, one: one.text, distance: one.distance };
+        renderAnalysis(env, setup, one, ha15, ha5, judge, cls, badges, reasons);
         updatePositionPanel();
         document.getElementById("lastTime").textContent = "最終分析：" + new Date().toLocaleString(); status.textContent = "分析完了。";
       } catch (e) { console.error(e); status.textContent = "取得失敗：" + e.message; renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]); }
     }
 
-    function renderAnalysis(env, setup, one, judge, cls, badges, reasons) {
+    function renderAnalysis(env, setup, one, ha15, ha5, judge, cls, badges, reasons) {
       document.getElementById("currentPrice").textContent = env.price.toFixed(3);
       document.getElementById("envView").textContent = env.text;
       document.getElementById("ema20View").textContent = env.ema20.toFixed(3);
+      document.getElementById("ha15View").textContent = ha15.text;
+      document.getElementById("ha5View").textContent = ha5.text;
       document.getElementById("setupView").textContent = setup.text;
       document.getElementById("oneSignalView").textContent = one.text;
       document.getElementById("oneDistanceView").textContent = one.distance;
