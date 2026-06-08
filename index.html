@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.5</title>
+  <title>ScalpLayer USDJPY v3.6</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -70,6 +70,12 @@
     .eventSafe { background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.28); color: #bbf7d0; border-radius: 16px; padding: 14px; font-weight: 900; margin-top: 10px; }
     .eventItem { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.22); border-radius: 14px; padding: 12px; margin-top: 10px; color: var(--muted); font-size: 14px; }
     .eventTitle { color: #fff; font-weight: 900; }
+    .eventMeta { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+    .impactBadge { display:inline-block; padding:4px 9px; border-radius:999px; font-weight:900; font-size:12px; }
+    .impactHigh { background:rgba(239,68,68,.20); color:#fecaca; border:1px solid rgba(239,68,68,.35); }
+    .impactMedium { background:rgba(250,204,21,.18); color:#fde68a; border:1px solid rgba(250,204,21,.35); }
+    .impactLow { background:rgba(148,163,184,.18); color:#cbd5e1; border:1px solid rgba(148,163,184,.28); }
+    .eventSource { color:#93c5fd; font-size:12px; margin-top:8px; }
     .orangeBtn { background: var(--orange); color: #fff; }
 
     .timeframeTabs { margin-top: 14px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
@@ -92,13 +98,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.5</h1>
+      <h1>ScalpLayer USDJPY v3.6</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.5：順張り判定と逆張り判定を分離。買い優勢でも買われすぎなら「押し目待ち」、売り優勢でも売られすぎなら「戻り待ち」と表示します。上部の時間足ボタン間隔も広げました。</section>
+    <section class="card update">v3.6：重要イベントの自動取得に対応。FMP Economic Calendar APIから米国・日本の経済指標を読み込み、USD/JPYへの影響度を自動判定して表示します。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -112,6 +118,14 @@
       <h2>② 重要イベント管理</h2>
       <p class="small">米雇用統計・CPI・FOMCなどの前後は、通常のテクニカル判定が効きにくくなるため、売買しない・ポジションを持たない運用を想定します。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
+
+      <label for="fmpApiKey">FMP APIキー（経済指標カレンダー用）</label>
+      <input id="fmpApiKey" type="password" placeholder="Financial Modeling Prep のAPIキーを入力（任意）" />
+      <div class="grid">
+        <button class="blue" onclick="saveFmpApiKey()">FMPキーを保存</button>
+        <button class="green" onclick="fetchEconomicEvents()">経済指標を自動取得</button>
+      </div>
+      <p id="calendarStatus" class="small">FMPキーを保存すると、米国・日本の経済指標を7日先まで読み込めます。影響度はUSD/JPY向けに自動推定します。</p>
 
       <div class="grid">
         <div>
@@ -138,7 +152,7 @@
       <button class="orangeBtn" onclick="addImportantEvent()">重要イベントを追加</button>
       <button class="blue" onclick="addPresetEvents()">米雇用統計の候補を追加</button>
       <button class="red" onclick="clearImportantEvents()">イベントを全削除</button>
-      <p class="small">※米雇用統計は第1金曜の候補日時を自動追加します。CPI・FOMCなど日程が変動するイベントは、経済指標カレンダーを確認して手動登録してください。</p>
+      <p class="small">※自動取得はFMP Economic Calendar APIを使用します。APIの取得失敗時や重要度の判定が微妙な場合は、従来どおり手動登録もできます。</p>
       <div id="eventList" class="small">登録イベントはありません。</div>
     </section>
 
@@ -278,7 +292,8 @@
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
     const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_1";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_6";
+    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_6";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
@@ -291,6 +306,8 @@
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
+      const savedFmpKey = localStorage.getItem(FMP_KEY_STORAGE);
+      if (savedFmpKey && document.getElementById("fmpApiKey")) { document.getElementById("fmpApiKey").value = savedFmpKey; document.getElementById("calendarStatus").textContent = "保存済みのFMPキーを読み込みました。"; }
       loadStats(); loadPosition(); loadImportantEvents(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
     });
 
@@ -298,6 +315,108 @@
       const key = document.getElementById("apiKey").value.trim();
       if (!key) { document.getElementById("keyStatus").textContent = "APIキーを入力してください。"; return; }
       localStorage.setItem(KEY_STORAGE, key); document.getElementById("keyStatus").textContent = "APIキーを保存しました。";
+    }
+
+
+    function saveFmpApiKey() {
+      const input = document.getElementById("fmpApiKey");
+      const status = document.getElementById("calendarStatus");
+      const key = input ? input.value.trim() : "";
+      if (!key) { if (status) status.textContent = "FMP APIキーを入力してください。"; return; }
+      localStorage.setItem(FMP_KEY_STORAGE, key);
+      if (status) status.textContent = "FMP APIキーを保存しました。次に「経済指標を自動取得」を押してください。";
+    }
+
+    function formatDateYMD(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseCalendarDate(value) {
+      if (!value) return null;
+      const str = String(value).trim();
+      // FMPの経済指標日時はUTC想定。タイムゾーン表記が無い場合もUTCとして扱い、日本時間表示に変換します。
+      const normalized = str.includes("T") ? str : str.replace(" ", "T");
+      const hasZone = /Z$|[+-]\d{2}:?\d{2}$/.test(normalized);
+      const dt = new Date(hasZone ? normalized : normalized + "Z");
+      return Number.isFinite(dt.getTime()) ? dt : null;
+    }
+
+    function normalizeCountry(raw) {
+      const v = String(raw || "").toLowerCase();
+      if (["us", "usa", "united states", "u.s.", "united states of america"].includes(v)) return "US";
+      if (["jp", "jpn", "japan"].includes(v)) return "JP";
+      return String(raw || "").toUpperCase();
+    }
+
+    function estimateFxImpact(event) {
+      const title = String(event.title || event.event || "");
+      const country = normalizeCountry(event.country || event.currency || "");
+      const text = title.toLowerCase();
+      let score = 1;
+      const highWords = ["non farm", "non-farm", "nfp", "payroll", "cpi", "inflation", "fomc", "fed", "interest rate", "rate decision", "boj", "bank of japan", "植田", "雇用統計", "消費者物価", "政策金利", "日銀", "federal reserve"];
+      const medWords = ["ppi", "pce", "gdp", "retail sales", "ism", "pmi", "jobless", "unemployment", "wage", "earnings", "trade balance", "industrial production", "ミシガン", "小売", "失業率", "gdp", "pmi", "鉱工業"];
+      if (highWords.some(w => text.includes(w))) score = 3;
+      else if (medWords.some(w => text.includes(w))) score = 2;
+      if (country === "US") score += 1; // USD/JPYでは米国指標を少し重く見る
+      if (country === "JP" && /boj|bank of japan|日銀|rate|政策金利|cpi|inflation|消費者物価/.test(text)) score += 1;
+      score = Math.min(3, Math.max(1, score));
+      const label = score >= 3 ? "高" : score === 2 ? "中" : "低";
+      const guard = score >= 3 ? { before: 45, after: 45 } : score === 2 ? { before: 20, after: 20 } : { before: 10, after: 10 };
+      const reason = score >= 3 ? "USD/JPYが急変しやすい重要指標です。前後は新規売買を避ける想定です。" : score === 2 ? "値動きが荒くなる可能性があります。直前直後の飛び乗りは注意です。" : "影響は限定的なことが多いですが、念のため時刻は確認します。";
+      return { score, label, reason, before: guard.before, after: guard.after };
+    }
+
+    async function fetchEconomicEvents() {
+      const status = document.getElementById("calendarStatus");
+      const key = (document.getElementById("fmpApiKey")?.value || localStorage.getItem(FMP_KEY_STORAGE) || "").trim();
+      if (!key) { if (status) status.textContent = "FMP APIキーを入力・保存してください。"; return; }
+      if (status) status.textContent = "経済指標カレンダーを取得中...";
+      try {
+        const from = formatDateYMD(new Date());
+        const toDate = new Date(); toDate.setDate(toDate.getDate() + 7);
+        const to = formatDateYMD(toDate);
+        const url = `https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) throw new Error(data?.message || "カレンダーを取得できませんでした。");
+        const now = Date.now();
+        const mapped = data.map(item => {
+          const dt = parseCalendarDate(item.date || item.datetime || item.time);
+          const title = item.event || item.title || item.name || "経済指標";
+          const country = normalizeCountry(item.country || item.currency || item.iso || "");
+          const impact = estimateFxImpact({ title, country, event: item.event });
+          return { raw: item, dt, title, country, impact };
+        }).filter(x => x.dt && x.dt.getTime() > now - 24 * 60 * 60000)
+          .filter(x => ["US", "JP", "USD", "JPY"].includes(x.country) || /united states|japan|usd|jpy|fed|fomc|boj|bank of japan/i.test(JSON.stringify(x.raw)))
+          .filter(x => x.impact.score >= 2)
+          .slice(0, 30);
+        const existingManual = importantEvents.filter(ev => ev.source !== "fmp");
+        const autoEvents = mapped.map(x => ({
+          id: "fmp_" + x.dt.getTime() + "_" + x.title.slice(0, 20),
+          title: x.title,
+          time: x.dt.toISOString(),
+          before: x.impact.before,
+          after: x.impact.after,
+          source: "fmp",
+          country: x.country,
+          impact: x.impact.label,
+          impactScore: x.impact.score,
+          impactReason: x.impact.reason,
+          actual: x.raw.actual ?? x.raw.Actual ?? null,
+          previous: x.raw.previous ?? x.raw.Previous ?? null,
+          estimate: x.raw.estimate ?? x.raw.Estimate ?? x.raw.consensus ?? null
+        }));
+        importantEvents = [...existingManual, ...autoEvents].sort((a,b) => new Date(a.time) - new Date(b.time));
+        saveImportantEvents();
+        renderEventPanel();
+        if (status) status.textContent = `経済指標を${autoEvents.length}件読み込みました。高・中影響の米国/日本イベントを表示しています。`;
+      } catch (e) {
+        console.error(e);
+        if (status) status.textContent = "取得失敗：FMP APIキー、通信状態、API利用枠を確認してください。";
+      }
     }
 
     async function fetchSeries(interval, outputsize) {
@@ -741,7 +860,7 @@
       const before = Math.max(0, Number(document.getElementById("guardBefore").value || 30));
       const after = Math.max(0, Number(document.getElementById("guardAfter").value || 30));
       if (!time) { alert("イベント日時を入力してください。"); return; }
-      importantEvents.push({ id: Date.now(), title, time: new Date(time).toISOString(), before, after, source: "manual" });
+      importantEvents.push({ id: Date.now(), title, time: new Date(time).toISOString(), before, after, source: "manual", impact: "手動", impactScore: 2, impactReason: "手動登録イベントです。影響が大きいと判断した場合は停止時間を長めに設定してください。" });
       importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
       saveImportantEvents();
       document.getElementById("eventTitle").value = "";
@@ -764,7 +883,7 @@
       }
       candidates.forEach(dt => {
         const exists = importantEvents.some(ev => ev.title.includes("米雇用統計") && Math.abs(new Date(ev.time) - dt) < 60 * 60000);
-        if (!exists) importantEvents.push({ id: Date.now() + Math.random(), title: "米雇用統計（候補・要確認）", time: dt.toISOString(), before, after, source: "preset" });
+        if (!exists) importantEvents.push({ id: Date.now() + Math.random(), title: "米雇用統計（候補・要確認）", time: dt.toISOString(), before, after, source: "preset", country: "US", impact: "高", impactScore: 3, impactReason: "米雇用統計はUSD/JPYの値動きが大きくなりやすい指標です。実際の日時は要確認です。" });
       });
       importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
       saveImportantEvents();
@@ -812,7 +931,7 @@
         if (risk.active) {
           const mins = Math.round(risk.diffMin);
           status.className = "eventDanger";
-          status.textContent = `重要イベント警戒中：${risk.event.title}（${mins >= 0 ? "発表後" + mins + "分" : "発表前" + Math.abs(mins) + "分"}）新規売買・保有は避ける時間帯です。`;
+          status.textContent = `重要イベント警戒中：${risk.event.title}｜影響度${risk.event.impact || "要確認"}（${mins >= 0 ? "発表後" + mins + "分" : "発表前" + Math.abs(mins) + "分"}）新規売買・保有は避ける時間帯です。`;
         } else {
           status.className = "eventSafe";
           status.textContent = "重要イベント警戒なし";
@@ -823,7 +942,15 @@
       if (!importantEvents.length) { list.textContent = "登録イベントはありません。"; return; }
       list.innerHTML = importantEvents.map(ev => {
         const dt = new Date(ev.time);
-        return `<div class="eventItem"><div class="eventTitle">${escapeHtml(ev.title)}</div>${dt.toLocaleString()}<br>停止時間：前${Number(ev.before ?? 30)}分 / 後${Number(ev.after ?? 30)}分</div>`;
+        const impact = ev.impact || "要確認";
+        const impactClass = impact === "高" ? "impactHigh" : impact === "中" ? "impactMedium" : "impactLow";
+        const country = ev.country ? `｜${escapeHtml(ev.country)}` : "";
+        const values = [
+          ev.previous !== null && ev.previous !== undefined ? `前回:${escapeHtml(ev.previous)}` : "",
+          ev.estimate !== null && ev.estimate !== undefined ? `予想:${escapeHtml(ev.estimate)}` : "",
+          ev.actual !== null && ev.actual !== undefined ? `結果:${escapeHtml(ev.actual)}` : ""
+        ].filter(Boolean).join(" / ");
+        return `<div class="eventItem"><div class="eventTitle">${escapeHtml(ev.title)}${country}</div>${dt.toLocaleString()}<div class="eventMeta"><span class="impactBadge ${impactClass}">為替影響：${escapeHtml(impact)}</span><span class="impactBadge impactLow">停止：前${Number(ev.before ?? 30)}分 / 後${Number(ev.after ?? 30)}分</span></div>${values ? `<div class="small">${values}</div>` : ""}<div class="eventSource">${escapeHtml(ev.impactReason || "影響度はイベント名・国から自動推定しています。")} ${ev.source === "fmp" ? "（FMP自動取得）" : ""}</div></div>`;
       }).join("");
     }
 
