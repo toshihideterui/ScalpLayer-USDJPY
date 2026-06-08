@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.7</title>
+  <title>ScalpLayer USDJPY v3.9</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -112,13 +112,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.7</h1>
+      <h1>ScalpLayer USDJPY v3.9</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.7：重要イベント管理を「本日の経済指標」に整理。手動登録を削除し、当日の米国・日本イベントだけを表示します。重要指標の前後は自動でエントリー警戒にします。</section>
+    <section class="card update">v3.9：重要イベント管理を「本日の経済指標」に整理し、検証ダッシュボードを追加。手動登録は削除し、当日の米国・日本イベントだけを表示します。重要指標の前後は自動でエントリー警戒にします。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -290,9 +290,9 @@
     const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v3_9";
     const ECONOMIC_CALENDAR_ENDPOINT = "/calendar";
     const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_7";
-    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_7";
-    const FMP_KEY_STORAGE_OLD = "scalplayer_fmp_key_v3_6";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_9";
+    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_9";
+    const FMP_KEY_STORAGE_OLD = "scalplayer_fmp_key_v3_7";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
