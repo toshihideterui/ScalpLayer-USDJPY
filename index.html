@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.8</title>
+  <title>ScalpLayer USDJPY v3.7</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -35,11 +35,10 @@
     button:active { transform: translateY(1px); }
     .green { background: var(--green); color: #052e16; } .red { background: var(--red); color: #fff; } .blue { background: var(--blue-main); color: #fff; }
     .result { font-size: 26px; font-weight: 950; padding: 18px; border-radius: 18px; text-align: center; margin-top: 16px; }
-    .mainJudge { font-size: 32px; padding: 24px 18px; letter-spacing: .03em; box-shadow: 0 14px 28px rgba(0,0,0,.22); }
     .buy { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); color: #fff; } .sell { background: linear-gradient(135deg, var(--blue-main), var(--blue-deep)); color: #fff; } .wait { background: var(--wait); color: #fff; } .prep { background: linear-gradient(135deg, #f59e0b, var(--orange-deep)); color: #fff; }
     .small { color: var(--muted); font-size: 14px; line-height: 1.8; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .statBox { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 16px; padding: 14px; text-align: center; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .statBox { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.2); border-radius: 16px; padding: 18px; text-align: center; }
     .statBox strong { display: block; font-size: 24px; }
     .statBox.colorBox { color: #fff; border: 0; text-align: left; box-shadow: 0 12px 24px rgba(0,0,0,.20); }
     .statBox.colorBox strong { font-size: 28px; line-height: 1.25; margin-top: 6px; }
@@ -77,11 +76,13 @@
     .impactMedium { background:rgba(250,204,21,.18); color:#fde68a; border:1px solid rgba(250,204,21,.35); }
     .impactLow { background:rgba(148,163,184,.18); color:#cbd5e1; border:1px solid rgba(148,163,184,.28); }
     .eventSource { color:#93c5fd; font-size:12px; margin-top:8px; }
+    .eventTimeBig { color:#fff; font-size:20px; font-weight:950; margin-top:6px; }
+    .remainBadge { display:inline-block; padding:5px 10px; border-radius:999px; background:rgba(56,189,248,.16); color:#bae6fd; border:1px solid rgba(56,189,248,.30); font-weight:900; font-size:12px; }
     .orangeBtn { background: var(--orange); color: #fff; }
 
     .timeframeTabs { margin-top: 14px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
     .timeframeTabs .sectionLabel { min-width: 116px; justify-content: center; font-size: 18px; padding: 10px 18px; margin-bottom: 0; }
-    .scoreGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+    .scoreGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 14px 0; }
     .scoreCard { background: rgba(2,6,23,.72); border: 1px solid rgba(148,163,184,.22); border-radius: 18px; padding: 16px; box-shadow: 0 12px 24px rgba(0,0,0,.18); }
     .scoreCard.buyScore { border-color: rgba(74,222,128,.35); background: linear-gradient(135deg, rgba(22,163,74,.20), rgba(2,6,23,.72)); }
     .scoreCard.counterScore { border-color: rgba(249,115,22,.40); background: linear-gradient(135deg, rgba(249,115,22,.18), rgba(2,6,23,.72)); }
@@ -93,19 +94,31 @@
     .guideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
     .guideBox { background: rgba(2,6,23,.62); border: 1px solid rgba(148,163,184,.20); border-radius: 16px; padding: 12px; color: var(--muted); }
     .guideBox strong { color: #fff; display: block; font-size: 18px; }
-    @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid, .scoreGrid, .guideGrid { grid-template-columns: 1fr; } .timeframeTabs { gap: 12px; } .timeframeTabs .sectionLabel { min-width: 96px; font-size: 16px; padding: 9px 14px; } }
+
+    .insightGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .insightBox { background: rgba(2,6,23,.68); border: 1px solid rgba(148,163,184,.22); border-radius: 16px; padding: 14px; }
+    .insightBox strong { color:#fff; display:block; font-size: 20px; margin-bottom: 4px; }
+    .insightBox span { color: var(--muted); font-size: 13px; }
+    .miniTable { width:100%; border-collapse: collapse; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .miniTable th, .miniTable td { border-bottom: 1px solid rgba(148,163,184,.18); padding: 8px 6px; text-align:left; }
+    .miniTable th { color:#fff; font-size: 12px; }
+    .miniTable td:last-child, .miniTable th:last-child { text-align:right; }
+    .tagWin { color:#bbf7d0; font-weight:900; }
+    .tagLose { color:#fecaca; font-weight:900; }
+    .tagDraw { color:#fde68a; font-weight:900; }
+    @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid, .scoreGrid, .guideGrid, .insightGrid { grid-template-columns: 1fr; } .timeframeTabs { gap: 12px; } .timeframeTabs .sectionLabel { min-width: 96px; font-size: 16px; padding: 9px 14px; } }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.8</h1>
+      <h1>ScalpLayer USDJPY v3.7</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.8：経済指標を完全自動化。FMP APIキー入力欄を削除し、Cloudflare Worker経由で本日の米国・日本イベントを読み込みます。総合判断も大きく見やすくしました。</section>
+    <section class="card update">v3.7：重要イベント管理を「本日の経済指標」に整理。手動登録を削除し、当日の米国・日本イベントだけを表示します。重要指標の前後は自動でエントリー警戒にします。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -117,10 +130,17 @@
 
     <section class="card">
       <h2>② 本日の経済指標</h2>
-      <p class="small">米CPI・雇用統計・FOMC・日銀関連など、USD/JPYが急変しやすい当日のイベントだけを自動表示します。高影響は前後30分、中影響は前後15分を自動で警戒時間にします。</p>
+      <p class="small">米CPI・雇用統計・FOMC・日銀関連など、USD/JPYが急変しやすい当日のイベントだけを表示します。高影響は前後30分、中影響は前後15分を自動で警戒時間にします。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
-      <p id="calendarStatus" class="small">本日の経済指標を自動取得中です。</p>
-      <div id="eventList" class="small">本日の経済指標を読み込み中...</div>
+
+      <label for="fmpApiKey">FMP APIキー（経済指標カレンダー用）</label>
+      <input id="fmpApiKey" type="password" placeholder="Financial Modeling Prep のAPIキーを入力" />
+      <div class="grid">
+        <button class="blue" onclick="saveFmpApiKey()">FMPキーを保存</button>
+        <button class="green" onclick="fetchEconomicEvents()">本日の指標を再取得</button>
+      </div>
+      <p id="calendarStatus" class="small">FMPキーを保存すると、本日の米国・日本の経済指標を自動取得します。</p>
+      <div id="eventList" class="small">本日の経済指標はまだ読み込まれていません。</div>
     </section>
 
     <section class="card">
@@ -214,7 +234,7 @@
           <strong id="oneDistanceView">--</strong>
         </div>
       </div>
-      <div id="result" class="result wait mainJudge">判定待ち</div>
+      <div id="result" class="result wait">判定待ち</div>
       <div id="badges" style="margin-top: 12px;"></div>
       <h3>判定理由</h3>
       <ul id="reasons" class="reasonList"><li>まだ分析していません。</li></ul>
@@ -251,6 +271,15 @@
       <div class="grid">
         <div class="statBox">勝ち<strong id="wins">0</strong></div><div class="statBox">負け<strong id="loses">0</strong></div><div class="statBox">引き分け<strong id="draws">0</strong></div><div class="statBox">勝率<strong id="winRate">0%</strong></div>
       </div>
+      <h3>v3.9 検証ダッシュボード</h3>
+      <div class="insightGrid">
+        <div class="insightBox"><strong id="bestHourView">--</strong><span>勝ちやすい時間帯</span></div>
+        <div class="insightBox"><strong id="bestJudgeView">--</strong><span>勝ちやすい判定</span></div>
+        <div class="insightBox"><strong id="bestWeekdayView">--</strong><span>勝ちやすい曜日</span></div>
+        <div class="insightBox"><strong id="bestSideView">--</strong><span>買い/売りの相性</span></div>
+      </div>
+      <h3>時間帯別勝率</h3><div id="hourStats" class="small">まだ集計できません。</div>
+      <h3>判定別勝率</h3><div id="judgeStats" class="small">まだ集計できません。</div>
       <h3>記録ログ</h3><div id="log" class="small">まだ記録はありません。</div>
     </section>
   </main>
@@ -258,24 +287,28 @@
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
+    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v3_9";
+    const ECONOMIC_CALENDAR_ENDPOINT = "/calendar";
     const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_6";
-    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_6";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_7";
+    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_7";
+    const FMP_KEY_STORAGE_OLD = "scalplayer_fmp_key_v3_6";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
     let importantEvents = [];
     let lastKnownPrice = null;
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
+    let tradeHistory = [];
     let lastJudgeText = "判定なし";
     let lastSnapshot = { price: "--", env: "--", setup: "--", one: "--", distance: "--" };
 
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      const savedFmpKey = localStorage.getItem(FMP_KEY_STORAGE);
-      if (savedFmpKey && document.getElementById("fmpApiKey")) { document.getElementById("fmpApiKey").value = savedFmpKey; document.getElementById("calendarStatus").textContent = "保存済みのFMPキーを読み込みました。"; }
-      loadStats(); loadPosition(); loadImportantEvents(); updateStatsView(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
+      const savedFmpKey = localStorage.getItem(FMP_KEY_STORAGE) || localStorage.getItem(FMP_KEY_STORAGE_OLD);
+      if (savedFmpKey && document.getElementById("fmpApiKey")) { document.getElementById("fmpApiKey").value = savedFmpKey; document.getElementById("calendarStatus").textContent = "保存済みのFMPキーを読み込みました。本日の経済指標を自動取得します。"; setTimeout(fetchEconomicEvents, 800); }
+      loadStats(); loadTradeHistory(); loadPosition(); loadImportantEvents(); updateStatsView(); updateTradeInsights(); setTimeout(fetchEconomicEvents, 900); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
     });
 
     function saveApiKey() {
@@ -286,7 +319,12 @@
 
 
     function saveFmpApiKey() {
-      // v3.8ではFMP APIキー入力を廃止しました。APIキーはCloudflare Worker側で管理します。
+      const input = document.getElementById("fmpApiKey");
+      const status = document.getElementById("calendarStatus");
+      const key = input ? input.value.trim() : "";
+      if (!key) { if (status) status.textContent = "FMP APIキーを入力してください。"; return; }
+      localStorage.setItem(FMP_KEY_STORAGE, key);
+      if (status) status.textContent = "FMP APIキーを保存しました。次に「経済指標を自動取得」を押してください。";
     }
 
     function formatDateYMD(date) {
@@ -294,6 +332,20 @@
       const m = String(date.getMonth() + 1).padStart(2, "0");
       const d = String(date.getDate()).padStart(2, "0");
       return `${y}-${m}-${d}`;
+    }
+
+    function isTodayLocal(date) {
+      const now = new Date();
+      return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+    }
+
+    function formatRemainingTime(targetDate) {
+      const diff = targetDate.getTime() - Date.now();
+      const abs = Math.abs(diff);
+      const h = Math.floor(abs / 3600000);
+      const m = Math.floor((abs % 3600000) / 60000);
+      if (diff >= 0) return h > 0 ? `残り${h}時間${m}分` : `残り${m}分`;
+      return h > 0 ? `発表後${h}時間${m}分` : `発表後${m}分`;
     }
 
     function parseCalendarDate(value) {
@@ -326,41 +378,42 @@
       if (country === "JP" && /boj|bank of japan|日銀|rate|政策金利|cpi|inflation|消費者物価/.test(text)) score += 1;
       score = Math.min(3, Math.max(1, score));
       const label = score >= 3 ? "高" : score === 2 ? "中" : "低";
-      const guard = score >= 3 ? { before: 45, after: 45 } : score === 2 ? { before: 20, after: 20 } : { before: 10, after: 10 };
+      const guard = score >= 3 ? { before: 30, after: 30 } : score === 2 ? { before: 15, after: 15 } : { before: 10, after: 10 };
       const reason = score >= 3 ? "USD/JPYが急変しやすい重要指標です。前後は新規売買を避ける想定です。" : score === 2 ? "値動きが荒くなる可能性があります。直前直後の飛び乗りは注意です。" : "影響は限定的なことが多いですが、念のため時刻は確認します。";
       return { score, label, reason, before: guard.before, after: guard.after };
     }
 
     async function fetchEconomicEvents() {
       const status = document.getElementById("calendarStatus");
-      if (status) status.textContent = "本日の経済指標を自動取得中...";
+      const key = (document.getElementById("fmpApiKey")?.value || localStorage.getItem(FMP_KEY_STORAGE) || "").trim();
+      if (!key) { if (status) status.textContent = "FMP APIキーを入力・保存してください。"; return; }
+      if (status) status.textContent = "経済指標カレンダーを取得中...";
       try {
-        const url = ECONOMIC_CALENDAR_ENDPOINT + (ECONOMIC_CALENDAR_ENDPOINT.includes("?") ? "&" : "?") + "date=" + encodeURIComponent(formatDateYMD(new Date()));
-        const res = await fetch(url, { cache: "no-store" });
+        const from = formatDateYMD(new Date());
+        const toDate = new Date();
+        const to = formatDateYMD(toDate);
+        const url = `https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || data?.error || "カレンダーを取得できませんでした。");
-
-        const rawEvents = Array.isArray(data) ? data : (Array.isArray(data.events) ? data.events : []);
-        const mapped = rawEvents.map(item => {
+        if (!res.ok || !Array.isArray(data)) throw new Error(data?.message || "カレンダーを取得できませんでした。");
+        const now = Date.now();
+        const mapped = data.map(item => {
           const dt = parseCalendarDate(item.date || item.datetime || item.time);
           const title = item.event || item.title || item.name || "経済指標";
           const country = normalizeCountry(item.country || item.currency || item.iso || "");
-          const impact = item.impact && item.impactScore
-            ? { score: Number(item.impactScore), label: item.impact, reason: item.impactReason || "Worker側で影響度を判定しています。", before: Number(item.before || 30), after: Number(item.after || 30) }
-            : estimateFxImpact({ title, country, event: item.event });
+          const impact = estimateFxImpact({ title, country, event: item.event });
           return { raw: item, dt, title, country, impact };
         }).filter(x => x.dt && isTodayLocal(x.dt))
           .filter(x => ["US", "JP", "USD", "JPY"].includes(x.country) || /united states|japan|usd|jpy|fed|fomc|boj|bank of japan/i.test(JSON.stringify(x.raw)))
           .filter(x => x.impact.score >= 2)
           .slice(0, 30);
-
         const autoEvents = mapped.map(x => ({
-          id: "auto_" + x.dt.getTime() + "_" + x.title.slice(0, 20),
+          id: "fmp_" + x.dt.getTime() + "_" + x.title.slice(0, 20),
           title: x.title,
           time: x.dt.toISOString(),
-          before: x.impact.score >= 3 ? 30 : x.impact.score === 2 ? 15 : 10,
-          after: x.impact.score >= 3 ? 30 : x.impact.score === 2 ? 15 : 10,
-          source: "auto",
+          before: x.impact.before,
+          after: x.impact.after,
+          source: "fmp",
           country: x.country,
           impact: x.impact.label,
           impactScore: x.impact.score,
@@ -369,17 +422,13 @@
           previous: x.raw.previous ?? x.raw.Previous ?? null,
           estimate: x.raw.estimate ?? x.raw.Estimate ?? x.raw.consensus ?? null
         }));
-
         importantEvents = autoEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
         saveImportantEvents();
         renderEventPanel();
         if (status) status.textContent = `本日の経済指標を${autoEvents.length}件読み込みました。高・中影響の米国/日本イベントだけを表示しています。`;
       } catch (e) {
         console.error(e);
-        importantEvents = [];
-        saveImportantEvents();
-        renderEventPanel();
-        if (status) status.textContent = "取得失敗：/calendar のWorker設定、通信状態、API利用枠を確認してください。";
+        if (status) status.textContent = "取得失敗：FMP APIキー、通信状態、API利用枠を確認してください。";
       }
     }
 
@@ -745,8 +794,8 @@
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v3.5順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        reasons.push(`v3.5逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`v3.9順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v3.9逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
         badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
 
@@ -792,7 +841,7 @@
       document.getElementById("setupView").textContent = setup.text;
       document.getElementById("oneSignalView").textContent = one.text;
       document.getElementById("oneDistanceView").textContent = one.distance;
-      const result = document.getElementById("result"); result.textContent = judge; result.className = cls + " mainJudge";
+      const result = document.getElementById("result"); result.textContent = judge; result.className = cls;
       document.getElementById("badges").innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join(""); renderReasons(reasons);
     }
     function renderReasons(reasons) { document.getElementById("reasons").innerHTML = reasons.map(r => `<li>${escapeHtml(r)}</li>`).join(""); }
@@ -812,11 +861,66 @@
         importantEvents = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(importantEvents)) importantEvents = [];
       } catch(e) { importantEvents = []; }
-      importantEvents = importantEvents.filter(ev => ev && ev.time && new Date(ev.time).getTime() > Date.now() - 24 * 60 * 60000);
+      importantEvents = importantEvents.filter(ev => ev && ev.time && isTodayLocal(new Date(ev.time)));
       saveImportantEvents();
     }
 
     function saveImportantEvents() { localStorage.setItem(EVENT_STORAGE, JSON.stringify(importantEvents)); }
+
+    function addImportantEvent() {
+      const title = document.getElementById("eventTitle").value.trim() || "重要イベント";
+      const time = document.getElementById("eventDateTime").value;
+      const before = Math.max(0, Number(document.getElementById("guardBefore").value || 30));
+      const after = Math.max(0, Number(document.getElementById("guardAfter").value || 30));
+      if (!time) { alert("イベント日時を入力してください。"); return; }
+      importantEvents.push({ id: Date.now(), title, time: new Date(time).toISOString(), before, after, source: "manual", impact: "手動", impactScore: 2, impactReason: "手動登録イベントです。影響が大きいと判断した場合は停止時間を長めに設定してください。" });
+      importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
+      saveImportantEvents();
+      document.getElementById("eventTitle").value = "";
+      document.getElementById("eventDateTime").value = "";
+      renderEventPanel();
+    }
+
+    function addPresetEvents() {
+      const before = Math.max(0, Number(document.getElementById("guardBefore").value || 30));
+      const after = Math.max(0, Number(document.getElementById("guardAfter").value || 30));
+      const now = new Date();
+      const candidates = [];
+      for (let i = 0; i < 4; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const firstFriday = getFirstFriday(d.getFullYear(), d.getMonth());
+        const hour = isLikelyUsDst(firstFriday) ? 21 : 22;
+        const minute = 30;
+        const eventDate = new Date(firstFriday.getFullYear(), firstFriday.getMonth(), firstFriday.getDate(), hour, minute, 0, 0);
+        if (eventDate.getTime() > now.getTime() - 24 * 60 * 60000) candidates.push(eventDate);
+      }
+      candidates.forEach(dt => {
+        const exists = importantEvents.some(ev => ev.title.includes("米雇用統計") && Math.abs(new Date(ev.time) - dt) < 60 * 60000);
+        if (!exists) importantEvents.push({ id: Date.now() + Math.random(), title: "米雇用統計（候補・要確認）", time: dt.toISOString(), before, after, source: "preset", country: "US", impact: "高", impactScore: 3, impactReason: "米雇用統計はUSD/JPYの値動きが大きくなりやすい指標です。実際の日時は要確認です。" });
+      });
+      importantEvents.sort((a,b) => new Date(a.time) - new Date(b.time));
+      saveImportantEvents();
+      renderEventPanel();
+      alert("米雇用統計の候補を追加しました。実際の発表日時は必ず経済指標カレンダーで確認してください。");
+    }
+
+    function getFirstFriday(year, monthIndex) {
+      const d = new Date(year, monthIndex, 1);
+      while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+      return d;
+    }
+
+    function isLikelyUsDst(date) {
+      const m = date.getMonth() + 1;
+      return m >= 3 && m <= 10;
+    }
+
+    function clearImportantEvents() {
+      if (!confirm("登録済みの重要イベントをすべて削除しますか？")) return;
+      importantEvents = [];
+      saveImportantEvents();
+      renderEventPanel();
+    }
 
     function getActiveEventRisk() {
       const now = Date.now();
@@ -848,7 +952,7 @@
       }
       const list = document.getElementById("eventList");
       if (!list) return;
-      if (!importantEvents.length) { list.textContent = "登録イベントはありません。"; return; }
+      if (!importantEvents.length) { list.textContent = "本日の高・中影響イベントはありません。指標日でない日は、ここは空のままで大丈夫です。"; return; }
       list.innerHTML = importantEvents.map(ev => {
         const dt = new Date(ev.time);
         const impact = ev.impact || "要確認";
@@ -859,7 +963,7 @@
           ev.estimate !== null && ev.estimate !== undefined ? `予想:${escapeHtml(ev.estimate)}` : "",
           ev.actual !== null && ev.actual !== undefined ? `結果:${escapeHtml(ev.actual)}` : ""
         ].filter(Boolean).join(" / ");
-        return `<div class="eventItem"><div class="eventTitle">${escapeHtml(ev.title)}${country}</div>${dt.toLocaleString()}<div class="eventMeta"><span class="impactBadge ${impactClass}">為替影響：${escapeHtml(impact)}</span><span class="impactBadge impactLow">停止：前${Number(ev.before ?? 30)}分 / 後${Number(ev.after ?? 30)}分</span></div>${values ? `<div class="small">${values}</div>` : ""}<div class="eventSource">${escapeHtml(ev.impactReason || "影響度はイベント名・国から自動推定しています。")} ${ev.source === "fmp" ? "（FMP自動取得）" : ""}</div></div>`;
+        return `<div class="eventItem"><div class="eventTitle">${escapeHtml(ev.title)}${country}</div><div class="eventTimeBig">${dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div><div class="eventMeta"><span class="impactBadge ${impactClass}">為替影響：${escapeHtml(impact)}</span><span class="remainBadge">${formatRemainingTime(dt)}</span><span class="impactBadge impactLow">停止：前${Number(ev.before ?? 30)}分 / 後${Number(ev.after ?? 30)}分</span></div>${values ? `<div class="small">${values}</div>` : ""}<div class="eventSource">${escapeHtml(ev.impactReason || "影響度はイベント名・国から自動推定しています。")} ${ev.source === "fmp" ? "（FMP自動取得）" : ""}</div></div>`;
       }).join("");
     }
 
@@ -952,12 +1056,163 @@
       adviceView.className = "adviceBox " + advice.cls;
     }
 
-    function recordTrade() { const r = document.getElementById("tradeResult").value; if (r === "win") wins++; if (r === "lose") loses++; if (r === "draw") draws++; totalTrades++; addLog(r); saveStats(); updateStatsView(); }
-    function addLog(result) { const log = document.getElementById("log"); const now = new Date(); const resultText = result === "win" ? "勝ち" : result === "lose" ? "負け" : "引き分け"; const item = document.createElement("div"); item.className = "logItem"; const posText = activePosition ? `｜管理中：${activePosition.side === "buy" ? "買い" : "売り"} ${Number(activePosition.entryPrice).toFixed(3)}` : ""; item.textContent = `${now.toLocaleString()}｜${resultText}｜判定：${lastJudgeText}｜価格：${lastSnapshot.price}｜15分：${lastSnapshot.env}｜5分：${lastSnapshot.setup}｜1分：${lastSnapshot.one}｜距離：${lastSnapshot.distance}${posText}`; if (log.textContent === "まだ記録はありません。") log.textContent = ""; log.prepend(item); }
-    function updateStatsView() { document.getElementById("wins").textContent = wins; document.getElementById("loses").textContent = loses; document.getElementById("draws").textContent = draws; const base = wins + loses; const rate = base === 0 ? 0 : Math.round((wins / base) * 100); document.getElementById("winRate").textContent = rate + "%"; }
+    function recordTrade() {
+      const r = document.getElementById("tradeResult").value;
+      if (r === "win") wins++;
+      if (r === "lose") loses++;
+      if (r === "draw") draws++;
+      totalTrades++;
+
+      const now = new Date();
+      const side = activePosition ? activePosition.side : inferSideFromJudge(lastJudgeText);
+      const trade = {
+        id: Date.now(),
+        result: r,
+        time: now.toISOString(),
+        hour: now.getHours(),
+        weekday: now.getDay(),
+        judge: lastJudgeText || "判定なし",
+        side,
+        price: lastSnapshot.price,
+        env: lastSnapshot.env,
+        setup: lastSnapshot.setup,
+        one: lastSnapshot.one,
+        distance: lastSnapshot.distance,
+        entryPrice: activePosition ? activePosition.entryPrice : null
+      };
+      tradeHistory.unshift(trade);
+      tradeHistory = tradeHistory.slice(0, 300);
+      addLogItem(trade);
+      saveStats();
+      saveTradeHistory();
+      updateStatsView();
+      updateTradeInsights();
+    }
+
+    function inferSideFromJudge(judge) {
+      const text = String(judge || "");
+      if (text.includes("買い") || text.includes("押し目")) return "buy";
+      if (text.includes("売り") || text.includes("戻り")) return "sell";
+      return "none";
+    }
+
+    function addLogItem(trade) {
+      const log = document.getElementById("log");
+      if (!log) return;
+      const dt = new Date(trade.time);
+      const resultText = trade.result === "win" ? "勝ち" : trade.result === "lose" ? "負け" : "引き分け";
+      const resultClass = trade.result === "win" ? "tagWin" : trade.result === "lose" ? "tagLose" : "tagDraw";
+      const sideText = trade.side === "buy" ? "買い" : trade.side === "sell" ? "売り" : "方向なし";
+      const item = document.createElement("div");
+      item.className = "logItem";
+      item.innerHTML = `${escapeHtml(dt.toLocaleString())}｜<span class="${resultClass}">${resultText}</span>｜${escapeHtml(sideText)}｜判定：${escapeHtml(trade.judge)}｜価格：${escapeHtml(trade.price)}｜15分：${escapeHtml(trade.env)}｜5分：${escapeHtml(trade.setup)}｜1分：${escapeHtml(trade.one)}｜距離：${escapeHtml(trade.distance)}`;
+      if (log.textContent === "まだ記録はありません。") log.textContent = "";
+      log.prepend(item);
+    }
+
+    function renderTradeLog() {
+      const log = document.getElementById("log");
+      if (!log) return;
+      log.innerHTML = "";
+      if (!tradeHistory.length) { log.textContent = "まだ記録はありません。"; return; }
+      tradeHistory.slice(0, 50).reverse().forEach(t => addLogItem(t));
+    }
+
+    function updateStatsView() {
+      document.getElementById("wins").textContent = wins;
+      document.getElementById("loses").textContent = loses;
+      document.getElementById("draws").textContent = draws;
+      const base = wins + loses;
+      const rate = base === 0 ? 0 : Math.round((wins / base) * 100);
+      document.getElementById("winRate").textContent = rate + "%";
+    }
+
     function saveStats() { localStorage.setItem(STAT_STORAGE, JSON.stringify({ wins, loses, draws, totalTrades })); }
-    function loadStats() { try { const raw = localStorage.getItem(STAT_STORAGE); if (!raw) return; const data = JSON.parse(raw); wins = data.wins || 0; loses = data.loses || 0; draws = data.draws || 0; totalTrades = data.totalTrades || 0; } catch(e) {} }
-    function resetStats() { if (!confirm("記録をリセットしますか？")) return; wins = 0; loses = 0; draws = 0; totalTrades = 0; localStorage.removeItem(STAT_STORAGE); document.getElementById("log").textContent = "まだ記録はありません。"; updateStatsView(); }
+
+    function loadStats() {
+      try {
+        const raw = localStorage.getItem(STAT_STORAGE);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        wins = data.wins || 0; loses = data.loses || 0; draws = data.draws || 0; totalTrades = data.totalTrades || 0;
+      } catch(e) {}
+    }
+
+    function saveTradeHistory() { localStorage.setItem(TRADE_HISTORY_STORAGE, JSON.stringify(tradeHistory)); }
+
+    function loadTradeHistory() {
+      try {
+        const raw = localStorage.getItem(TRADE_HISTORY_STORAGE);
+        tradeHistory = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(tradeHistory)) tradeHistory = [];
+      } catch(e) { tradeHistory = []; }
+      renderTradeLog();
+    }
+
+    function resetStats() {
+      if (!confirm("記録をリセットしますか？")) return;
+      wins = 0; loses = 0; draws = 0; totalTrades = 0; tradeHistory = [];
+      localStorage.removeItem(STAT_STORAGE);
+      localStorage.removeItem(TRADE_HISTORY_STORAGE);
+      document.getElementById("log").textContent = "まだ記録はありません。";
+      updateStatsView();
+      updateTradeInsights();
+    }
+
+    function aggregateTrades(keyFn) {
+      const map = {};
+      tradeHistory.forEach(t => {
+        const key = keyFn(t);
+        if (!key) return;
+        if (!map[key]) map[key] = { key, win:0, lose:0, draw:0, total:0 };
+        if (t.result === "win") map[key].win++;
+        else if (t.result === "lose") map[key].lose++;
+        else map[key].draw++;
+        map[key].total++;
+      });
+      return Object.values(map).map(x => {
+        const base = x.win + x.lose;
+        x.rate = base ? Math.round((x.win / base) * 100) : 0;
+        return x;
+      }).sort((a,b) => (b.rate - a.rate) || (b.total - a.total));
+    }
+
+    function renderAggregateTable(targetId, rows, labelName) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      const filtered = rows.filter(r => r.total >= 1).slice(0, 8);
+      if (!filtered.length) { el.textContent = "まだ集計できません。"; return; }
+      el.innerHTML = `<table class="miniTable"><thead><tr><th>${labelName}</th><th>件数</th><th>勝率</th></tr></thead><tbody>${filtered.map(r => `<tr><td>${escapeHtml(r.key)}</td><td>${r.total}</td><td>${r.rate}%</td></tr>`).join("")}</tbody></table>`;
+    }
+
+    function updateTradeInsights() {
+      const weekdayNames = ["日","月","火","水","木","金","土"];
+      const hourRows = aggregateTrades(t => `${String(t.hour).padStart(2,"0")}時台`);
+      const judgeRows = aggregateTrades(t => t.judge || "判定なし");
+      const weekdayRows = aggregateTrades(t => `${weekdayNames[t.weekday] || "--"}曜日`);
+      const sideRows = aggregateTrades(t => t.side === "buy" ? "買い" : t.side === "sell" ? "売り" : "方向なし");
+
+      renderAggregateTable("hourStats", hourRows, "時間帯");
+      renderAggregateTable("judgeStats", judgeRows, "判定");
+
+      const bestHour = hourRows.find(r => r.total >= 2) || hourRows[0];
+      const bestJudge = judgeRows.find(r => r.total >= 2) || judgeRows[0];
+      const bestWeekday = weekdayRows.find(r => r.total >= 2) || weekdayRows[0];
+      const bestSide = sideRows.find(r => r.total >= 2) || sideRows[0];
+
+      setInsight("bestHourView", bestHour);
+      setInsight("bestJudgeView", bestJudge);
+      setInsight("bestWeekdayView", bestWeekday);
+      setInsight("bestSideView", bestSide);
+    }
+
+    function setInsight(id, row) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!row) { el.textContent = "--"; return; }
+      el.textContent = `${row.key} ${row.rate}%`;
+    }
+
     function escapeHtml(str) { return String(str).replace(/[&<>"]/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[s])); }
   </script>
 </body>
