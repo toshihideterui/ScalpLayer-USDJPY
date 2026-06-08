@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.4</title>
+  <title>ScalpLayer USDJPY v3.5</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -71,19 +71,34 @@
     .eventItem { background: rgba(2,6,23,.65); border: 1px solid rgba(148,163,184,.22); border-radius: 14px; padding: 12px; margin-top: 10px; color: var(--muted); font-size: 14px; }
     .eventTitle { color: #fff; font-weight: 900; }
     .orangeBtn { background: var(--orange); color: #fff; }
-    @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid { grid-template-columns: 1fr; } }
+
+    .timeframeTabs { margin-top: 14px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .timeframeTabs .sectionLabel { min-width: 116px; justify-content: center; font-size: 18px; padding: 10px 18px; margin-bottom: 0; }
+    .scoreGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+    .scoreCard { background: rgba(2,6,23,.72); border: 1px solid rgba(148,163,184,.22); border-radius: 18px; padding: 16px; box-shadow: 0 12px 24px rgba(0,0,0,.18); }
+    .scoreCard.buyScore { border-color: rgba(74,222,128,.35); background: linear-gradient(135deg, rgba(22,163,74,.20), rgba(2,6,23,.72)); }
+    .scoreCard.counterScore { border-color: rgba(249,115,22,.40); background: linear-gradient(135deg, rgba(249,115,22,.18), rgba(2,6,23,.72)); }
+    .scoreTitle { color: var(--muted); font-weight: 900; font-size: 14px; margin-bottom: 6px; }
+    .scoreMain { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .scoreMain strong { font-size: 28px; line-height: 1.25; }
+    .scorePoint { font-size: 22px; font-weight: 950; color: #fde68a; white-space: nowrap; }
+    .scoreSub { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .guideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .guideBox { background: rgba(2,6,23,.62); border: 1px solid rgba(148,163,184,.20); border-radius: 16px; padding: 12px; color: var(--muted); }
+    .guideBox strong { color: #fff; display: block; font-size: 18px; }
+    @media (max-width: 640px) { body { padding: 14px; } h1 { font-size: 25px; } .card { padding: 20px; border-radius: 20px; } .grid, .scoreGrid, .guideGrid { grid-template-columns: 1fr; } .timeframeTabs { gap: 12px; } .timeframeTabs .sectionLabel { min-width: 96px; font-size: 16px; padding: 9px 14px; } }
   </style>
 </head>
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.4</h1>
-      <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div style="margin-top:10px;"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
+      <h1>ScalpLayer USDJPY v3.5</h1>
+      <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.4：平均足スコアを主役に変更。15分足・5分足の平均足、ヒゲなし本数、EMA20位置、1分足入口を合算し「強い買い／買い優勢／様子見／売り優勢／強い売り」で表示します。</section>
+    <section class="card update">v3.5：順張り判定と逆張り判定を分離。買い優勢でも買われすぎなら「押し目待ち」、売り優勢でも売られすぎなら「戻り待ち」と表示します。上部の時間足ボタン間隔も広げました。</section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -139,6 +154,23 @@
 
     <section class="card">
       <h2>④ 分析結果</h2>
+      <div class="scoreGrid">
+        <div class="scoreCard buyScore">
+          <div class="scoreTitle">順張り判定（トレンドフォロー）</div>
+          <div class="scoreMain"><strong id="trendFollowView">--</strong><span id="trendFollowPoint" class="scorePoint">--点</span></div>
+          <div id="trendFollowSub" class="scoreSub">平均足・EMA・5分準備・1分入口から判定</div>
+        </div>
+        <div class="scoreCard counterScore">
+          <div class="scoreTitle">逆張り判定（買われすぎ/売られすぎ）</div>
+          <div class="scoreMain"><strong id="counterView">--</strong><span id="counterPoint" class="scorePoint">--点</span></div>
+          <div id="counterSub" class="scoreSub">RSI・EMA乖離・平均足連続本数から判定</div>
+        </div>
+      </div>
+      <div id="strategyGuide" class="adviceBox adviceHold">総合判断は分析後に表示します。</div>
+      <div class="guideGrid">
+        <div class="guideBox"><strong id="sessionView">時間帯 --</strong><span id="sessionDetail">取引時間帯ガイドを表示します。</span></div>
+        <div class="guideBox"><strong id="entryPlanView">作戦 --</strong><span id="entryPlanDetail">順張りと逆張りのバランスから作戦を出します。</span></div>
+      </div>
       <div class="grid">
         <div class="statBox colorBox priceBox">
           現在価格
@@ -286,6 +318,29 @@
       return ema;
     }
     function calculatePreviousEMA(values, period) { if (values.length <= period) return null; return calculateEMA(values.slice(1), period); }
+
+
+    function calculateRSI(values, period = 14) {
+      const closes = values.slice().reverse().map(v => v.close).filter(Number.isFinite);
+      if (closes.length <= period) return null;
+      let gains = 0, losses = 0;
+      for (let i = 1; i <= period; i++) {
+        const diff = closes[i] - closes[i - 1];
+        if (diff >= 0) gains += diff; else losses -= diff;
+      }
+      let avgGain = gains / period;
+      let avgLoss = losses / period;
+      for (let i = period + 1; i < closes.length; i++) {
+        const diff = closes[i] - closes[i - 1];
+        const gain = diff > 0 ? diff : 0;
+        const loss = diff < 0 ? -diff : 0;
+        avgGain = (avgGain * (period - 1) + gain) / period;
+        avgLoss = (avgLoss * (period - 1) + loss) / period;
+      }
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
+      return 100 - (100 / (1 + rs));
+    }
 
     function calculateHeikinAshi(values) {
       const chronological = values.slice().reverse();
@@ -459,8 +514,9 @@
     function analyzeOneMinute(series1) {
       const c = series1[1], p = series1[2], p2 = series1[3];
       const ema9 = calculateEMA(series1, 9);
+      const rsi14 = calculateRSI(series1, 14);
       const reasons = ["1分足は未確定足を使わず、1本前の確定足でエントリーを見ています。"];
-      if (!c || !p || !p2 || ema9 === null) return { signal: "none", text: "不足", ema9, distance: "--", level: "none", reasons: ["1分足データが不足しています。"] };
+      if (!c || !p || !p2 || ema9 === null) return { signal: "none", text: "不足", ema9, rsi14, distance: "--", distancePips: 0, level: "none", reasons: ["1分足データが不足しています。"] };
       let buy = 0, sell = 0;
       if (c.close > c.open) { buy++; reasons.push("1分足の確定足が陽線です。"); }
       if (c.close < c.open) { sell++; reasons.push("1分足の確定足が陰線です。"); }
@@ -476,10 +532,11 @@
       if (distancePips > 3 && distancePips <= 8) { level = "caution"; distance = `${distancePips.toFixed(1)}pips：少し離れ`; }
       if (distancePips > 8) { level = "far"; distance = `${distancePips.toFixed(1)}pips：離れすぎ`; }
       reasons.push(`1分足9EMAとの距離は約${distancePips.toFixed(1)}pipsです。`);
+      if (rsi14 !== null) reasons.push(`1分足RSI(14)は ${rsi14.toFixed(1)} です。`);
 
-      if (buy >= 2 && buy > sell) return { signal: "buy", text: "買い入口", ema9, distance, level, reasons };
-      if (sell >= 2 && sell > buy) return { signal: "sell", text: "売り入口", ema9, distance, level, reasons };
-      reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, distance, level, reasons };
+      if (buy >= 2 && buy > sell) return { signal: "buy", text: "買い入口", ema9, rsi14, distance, distancePips, level, reasons };
+      if (sell >= 2 && sell > buy) return { signal: "sell", text: "売り入口", ema9, rsi14, distance, distancePips, level, reasons };
+      reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, rsi14, distance, distancePips, level, reasons };
     }
 
     function calculateHaTrendScore(env, setup, one, ha15, ha5) {
@@ -518,6 +575,77 @@
       return { score, text, direction, details };
     }
 
+    function calculateCounterTrendScore(one, ha15, ha5) {
+      let score = 0;
+      let direction = "none";
+      const details = [];
+      const rsi = one.rsi14;
+      const distance = Number(one.distancePips || 0);
+      const bullStreak = (ha15.streak?.direction === "bull" ? ha15.streak.count : 0) + (ha5.streak?.direction === "bull" ? ha5.streak.count : 0);
+      const bearStreak = (ha15.streak?.direction === "bear" ? ha15.streak.count : 0) + (ha5.streak?.direction === "bear" ? ha5.streak.count : 0);
+
+      if (rsi !== null && rsi >= 75) { score += 3; direction = "sell"; details.push(`RSI買われすぎ：+3`); }
+      else if (rsi !== null && rsi >= 70) { score += 2; direction = "sell"; details.push(`RSI高め：+2`); }
+      else if (rsi !== null && rsi <= 25) { score += 3; direction = "buy"; details.push(`RSI売られすぎ：+3`); }
+      else if (rsi !== null && rsi <= 30) { score += 2; direction = "buy"; details.push(`RSI低め：+2`); }
+
+      if (distance >= 8) { score += 2; details.push(`EMA乖離${distance.toFixed(1)}pips：+2`); }
+      else if (distance >= 5) { score += 1; details.push(`EMA乖離${distance.toFixed(1)}pips：+1`); }
+
+      if (bullStreak >= 5) { score += 2; if (direction === "none") direction = "sell"; details.push(`平均足陽線連続${bullStreak}本：+2`); }
+      else if (bullStreak >= 3) { score += 1; if (direction === "none") direction = "sell"; details.push(`平均足陽線連続${bullStreak}本：+1`); }
+      if (bearStreak >= 5) { score += 2; if (direction === "none") direction = "buy"; details.push(`平均足陰線連続${bearStreak}本：+2`); }
+      else if (bearStreak >= 3) { score += 1; if (direction === "none") direction = "buy"; details.push(`平均足陰線連続${bearStreak}本：+1`); }
+
+      let text = "逆張り弱い";
+      if (direction === "sell") text = score >= 5 ? "買われすぎ強" : score >= 3 ? "買われすぎ" : "売り警戒";
+      if (direction === "buy") text = score >= 5 ? "売られすぎ強" : score >= 3 ? "売られすぎ" : "買い警戒";
+      if (score <= 1) { text = "逆張り弱い"; direction = "none"; }
+      return { score, text, direction, details, rsi: rsi === null ? "--" : rsi.toFixed(1), distance };
+    }
+
+    function getSessionGuide() {
+      const now = new Date();
+      const h = now.getHours();
+      let name = "その他時間";
+      let detail = "値動きが読みづらい時間帯です。無理に入らない判断も有効です。";
+      let score = "★☆☆☆☆";
+      if (h >= 6 && h < 11) { name = "東京朝"; detail = "仲値前後は動きますが、伸びは控えめになりやすいです。"; score = "★★☆☆☆"; }
+      else if (h >= 16 && h < 19) { name = "ロンドン序盤"; detail = "方向が出やすい一方、初動のだましに注意です。"; score = "★★★★☆"; }
+      else if (h >= 19 && h < 22) { name = "欧州NY前"; detail = "仕事後の検証向き。押し目・戻り待ちと相性が良い時間です。"; score = "★★★★☆"; }
+      else if (h >= 22 || h < 1) { name = "NY時間"; detail = "値幅は出やすいですが、指標と急変動に注意です。"; score = "★★★★★"; }
+      else if (h >= 11 && h < 15) { name = "東京昼"; detail = "レンジ化しやすく、スキャルでは見送りも大事です。"; score = "★☆☆☆☆"; }
+      return { name, detail, score };
+    }
+
+    function decideV35Judge(trend, counter, one) {
+      let judge = "見送り";
+      let cls = "result wait";
+      let plan = "待機";
+      let detail = "順張りと逆張りの方向がまだ噛み合っていません。";
+      const counterHigh = counter.score >= 4;
+      const counterMid = counter.score >= 3;
+
+      if (trend.direction === "buy" && counter.direction === "sell" && counterMid) {
+        judge = "押し目待ち"; cls = "result prep"; plan = "押し目待ち";
+        detail = "上昇方向ですが買われすぎ警戒があります。3〜5pipsほど押してから反発確認を優先します。";
+      } else if (trend.direction === "sell" && counter.direction === "buy" && counterMid) {
+        judge = "戻り待ち"; cls = "result prep"; plan = "戻り待ち";
+        detail = "下降方向ですが売られすぎ警戒があります。3〜5pipsほど戻してから反落確認を優先します。";
+      } else if (trend.direction === "buy" && trend.score >= 4 && one.signal === "buy" && one.level !== "far") {
+        judge = counterHigh ? "買い慎重" : "買い入口"; cls = counterHigh ? "result prep" : "result buy"; plan = counterHigh ? "小ロット/待ち" : "順張り買い";
+        detail = counterHigh ? "買い条件はありますが過熱感も強いので、飛び乗りは避けます。" : "順張り方向と1分足入口が揃っています。";
+      } else if (trend.direction === "sell" && trend.score <= -4 && one.signal === "sell" && one.level !== "far") {
+        judge = counterHigh ? "売り慎重" : "売り入口"; cls = counterHigh ? "result prep" : "result sell"; plan = counterHigh ? "小ロット/待ち" : "順張り売り";
+        detail = counterHigh ? "売り条件はありますが過熱感も強いので、飛び乗りは避けます。" : "順張り方向と1分足入口が揃っています。";
+      } else if (trend.direction === "buy") {
+        judge = "買い優勢・入口待ち"; cls = "result prep"; plan = "買い待ち"; detail = "方向は上ですが、1分足の入口か押し目確認を待ちます。";
+      } else if (trend.direction === "sell") {
+        judge = "売り優勢・入口待ち"; cls = "result prep"; plan = "売り待ち"; detail = "方向は下ですが、1分足の入口か戻り確認を待ちます。";
+      }
+      return { judge, cls, plan, detail };
+    }
+
     async function runAnalysis() {
       const status = document.getElementById("status"); status.textContent = "取得・分析中...";
       try {
@@ -528,36 +656,19 @@
         lastKnownPrice = livePrice;
 
         const trend = calculateHaTrendScore(env, setup, one, ha15, ha5);
+        const counter = calculateCounterTrendScore(one, ha15, ha5);
+        const session = getSessionGuide();
+        const v35 = decideV35Judge(trend, counter, one);
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v3.4平均足スコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        badges.push(trend.text, `平均足スコア：${trend.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
+        reasons.push(`v3.5順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v3.5逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
+        badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
 
-        let judge = "見送り"; let cls = "result wait";
-        const buyReady = trend.direction === "buy" && trend.score >= 4 && one.signal === "buy" && ha15.bias !== "down";
-        const sellReady = trend.direction === "sell" && trend.score <= -4 && one.signal === "sell" && ha15.bias !== "up";
-
-        if (trend.direction === "buy" && one.signal !== "buy") {
-          judge = trend.score >= 4 ? "買い優勢・入口待ち" : "買い様子見";
-          cls = "result prep";
-          reasons.push("平均足は買い優勢ですが、1分足の入口がまだ揃っていません。飛び乗りを避けて入口待ちです。");
-        } else if (trend.direction === "sell" && one.signal !== "sell") {
-          judge = trend.score <= -4 ? "売り優勢・入口待ち" : "売り様子見";
-          cls = "result prep";
-          reasons.push("平均足は売り優勢ですが、1分足の入口がまだ揃っていません。飛び乗りを避けて入口待ちです。");
-        }
-
-        if (buyReady) {
-          if (one.level === "far") { judge = "押し目待ち"; cls = "result prep"; reasons.push("平均足スコアは買い優勢ですが、1分足9EMAから離れすぎています。飛び乗りを避けて押し目待ちにしました。"); }
-          else { judge = trend.text === "強い買い" ? "強い買い入口" : "買い入口"; cls = "result buy"; reasons.push("平均足スコア、5分足方向、1分足入口が買いで揃っています。v3.4ではここを買い候補として扱います。"); }
-        } else if (sellReady) {
-          if (one.level === "far") { judge = "戻り待ち"; cls = "result prep"; reasons.push("平均足スコアは売り優勢ですが、1分足9EMAから離れすぎています。飛び乗りを避けて戻り待ちにしました。"); }
-          else { judge = trend.text === "強い売り" ? "強い売り入口" : "売り入口"; cls = "result sell"; reasons.push("平均足スコア、5分足方向、1分足入口が売りで揃っています。v3.4ではここを売り候補として扱います。"); }
-        } else if (judge === "見送り") {
-          if (Math.abs(trend.score) <= 1) reasons.push("平均足スコアが中立圏です。方向が噛み合うまで見送りです。");
-          else reasons.push("平均足スコアは傾いていますが、エントリー条件が完全には揃っていません。");
-        }
+        let judge = v35.judge; let cls = v35.cls;
+        reasons.push(v35.detail);
 
         const eventRisk = getActiveEventRisk();
         if (eventRisk.active) {
@@ -568,16 +679,29 @@
         }
 
         lastJudgeText = judge; maybeAlert(judge);
-        lastSnapshot = { price: env.price.toFixed(3), env: env.text + " / 平均足:" + ha15.text + " / 総合:" + trend.text, setup: setup.text + " / 平均足:" + ha5.text, one: one.text, distance: one.distance };
-        renderAnalysis(env, setup, one, ha15, ha5, trend, judge, cls, badges, reasons);
+        lastSnapshot = { price: env.price.toFixed(3), env: env.text + " / 平均足:" + ha15.text + " / 順張り:" + trend.text + " / 逆張り:" + counter.text, setup: setup.text + " / 平均足:" + ha5.text, one: one.text, distance: one.distance };
+        renderAnalysis(env, setup, one, ha15, ha5, trend, counter, session, v35, judge, cls, badges, reasons);
         updatePositionPanel();
         document.getElementById("lastTime").textContent = "最終分析：" + new Date().toLocaleString(); status.textContent = "分析完了。";
       } catch (e) { console.error(e); status.textContent = "取得失敗：" + e.message; renderReasons(["APIキー、TwelveDataの利用枠、通信状態を確認してください。"]); }
     }
 
-    function renderAnalysis(env, setup, one, ha15, ha5, trend, judge, cls, badges, reasons) {
+    function renderAnalysis(env, setup, one, ha15, ha5, trend, counter, session, v35, judge, cls, badges, reasons) {
       document.getElementById("currentPrice").textContent = env.price.toFixed(3);
       document.getElementById("haScoreView").textContent = `${trend.text} ${trend.score > 0 ? "+" : ""}${trend.score}`;
+      document.getElementById("trendFollowView").textContent = trend.text;
+      document.getElementById("trendFollowPoint").textContent = `${trend.score}点`;
+      document.getElementById("trendFollowSub").textContent = trend.details.join(" / ") || "加点なし";
+      document.getElementById("counterView").textContent = counter.text;
+      document.getElementById("counterPoint").textContent = `${counter.score}点`;
+      document.getElementById("counterSub").textContent = `RSI:${counter.rsi} / EMA乖離:${counter.distance.toFixed(1)}pips`;
+      document.getElementById("sessionView").textContent = `${session.name} ${session.score}`;
+      document.getElementById("sessionDetail").textContent = session.detail;
+      document.getElementById("entryPlanView").textContent = `作戦 ${v35.plan}`;
+      document.getElementById("entryPlanDetail").textContent = v35.detail;
+      const guide = document.getElementById("strategyGuide");
+      guide.textContent = `総合判断：${judge}｜${v35.detail}`;
+      guide.className = "adviceBox " + (cls.includes("buy") || cls.includes("sell") ? "adviceHold" : cls.includes("prep") ? "adviceTake" : "adviceHold");
       document.getElementById("envView").textContent = env.text;
       document.getElementById("ema20View").textContent = env.ema20.toFixed(3);
       document.getElementById("ha15View").textContent = ha15.text;
