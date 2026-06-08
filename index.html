@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
+  <meta name="scalplayer-version" content="3.9-complete" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.7</title>
+  <title>ScalpLayer USDJPY v3.9</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -112,13 +113,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.7</h1>
+      <h1>ScalpLayer USDJPY v3.9</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v3.7：重要イベント管理を「本日の経済指標」に整理。手動登録を削除し、当日の米国・日本イベントだけを表示します。重要指標の前後は自動でエントリー警戒にします。</section>
+    <section class="card update">v3.9：FMPキー入力欄ありの完全版です。本日の米国・日本の経済指標を表示し、重要指標の前後は自動でエントリー警戒にします。ポジション管理と検証ダッシュボードも整理済みです。<br><span class="small">更新確認用：v3.9-complete</span></section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -289,9 +290,11 @@
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
     const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v3_9";
     const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_7";
-    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_7";
-    const FMP_KEY_STORAGE_OLD = "scalplayer_fmp_key_v3_6";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v3_9";
+    const EVENT_STORAGE_OLD = "scalplayer_usdjpy_events_v3_7";
+    const FMP_KEY_STORAGE = "scalplayer_fmp_key_v3_9";
+    const FMP_KEY_STORAGE_OLD = "scalplayer_fmp_key_v3_7";
+    const FMP_KEY_STORAGE_OLD2 = "scalplayer_fmp_key_v3_6";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
@@ -305,7 +308,7 @@
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      const savedFmpKey = localStorage.getItem(FMP_KEY_STORAGE) || localStorage.getItem(FMP_KEY_STORAGE_OLD);
+      const savedFmpKey = localStorage.getItem(FMP_KEY_STORAGE) || localStorage.getItem(FMP_KEY_STORAGE_OLD) || localStorage.getItem(FMP_KEY_STORAGE_OLD2);
       if (savedFmpKey && document.getElementById("fmpApiKey")) { document.getElementById("fmpApiKey").value = savedFmpKey; document.getElementById("calendarStatus").textContent = "保存済みのFMPキーを読み込みました。本日の経済指標を自動取得します。"; setTimeout(fetchEconomicEvents, 800); }
       loadStats(); loadTradeHistory(); loadPosition(); loadImportantEvents(); updateStatsView(); updateTradeInsights(); setTimeout(fetchEconomicEvents, 900); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
     });
@@ -385,7 +388,7 @@
 
     async function fetchEconomicEvents() {
       const status = document.getElementById("calendarStatus");
-      const key = (document.getElementById("fmpApiKey")?.value || localStorage.getItem(FMP_KEY_STORAGE) || localStorage.getItem(FMP_KEY_STORAGE_OLD) || "").trim();
+      const key = (document.getElementById("fmpApiKey")?.value || localStorage.getItem(FMP_KEY_STORAGE) || localStorage.getItem(FMP_KEY_STORAGE_OLD) || localStorage.getItem(FMP_KEY_STORAGE_OLD2) || "").trim();
       if (!key) { if (status) status.textContent = "FMP APIキーを入力・保存してください。"; return; }
       if (status) status.textContent = "経済指標カレンダーを取得中...";
       try {
@@ -877,7 +880,7 @@
 
     function loadImportantEvents() {
       try {
-        const raw = localStorage.getItem(EVENT_STORAGE);
+        const raw = localStorage.getItem(EVENT_STORAGE) || localStorage.getItem(EVENT_STORAGE_OLD);
         importantEvents = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(importantEvents)) importantEvents = [];
       } catch(e) { importantEvents = []; }
