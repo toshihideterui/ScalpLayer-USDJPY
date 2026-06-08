@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
-  <meta name="scalplayer-version" content="3.9-complete" />
+  <meta name="scalplayer-version" content="4.0-complete" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v3.9</title>
+  <title>ScalpLayer USDJPY v4.0</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -113,7 +113,7 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v3.9</h1>
+      <h1>ScalpLayer USDJPY v4.0</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
@@ -134,7 +134,7 @@
       <p class="small">米CPI・雇用統計・FOMC・日銀関連など、USD/JPYが急変しやすい当日のイベントだけを表示します。高影響は前後30分、中影響は前後15分を自動で警戒時間にします。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
 
-      <label for="fmpApiKey">FMP APIキー（経済指標カレンダー用）</label>
+      <div class="eventSafe">v4.0: 経済指標は無料モードで表示します（APIキー不要）</div>
       <input id="fmpApiKey" type="password" placeholder="Financial Modeling Prep のAPIキーを入力" />
       <div class="grid">
         <button class="blue" onclick="saveFmpApiKey()">FMPキーを保存</button>
