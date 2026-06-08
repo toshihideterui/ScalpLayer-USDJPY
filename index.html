@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
-  <meta name="scalplayer-version" content="4.4" />
+  <meta name="scalplayer-version" content="4.5" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v4.4</title>
+  <title>ScalpLayer USDJPY v4.5</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -127,13 +127,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v4.4</h1>
+      <h1>ScalpLayer USDJPY v4.5</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v4.4：ポジション管理をさらに強化しました。Lot、円換算損益、損切り/利確価格、RR比、保有アドバイスを追加しました。<br><span class="small">更新確認用：v4.4</span></section>
+    <section class="card update">v4.5：ポジション保有中のドテン判定を正式追加しました。反対方向の優勢では撤退推奨、入口確定ではドテン候補を表示します。<br><span class="small">更新確認用：v4.5</span></section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -148,7 +148,7 @@
       <p class="small">CPI・雇用統計（NFP）・FOMC・ISM製造業景況指数・ADP雇用統計・小売売上高を固定チェックします。重要イベント候補日は終日警戒、それ以外の日は通常取引可能として表示します。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
 
-      <div class="eventSafe">v4.4: 経済指標はAPIキー不要の固定チェック方式です。</div>
+      <div class="eventSafe">v4.5: 経済指標はAPIキー不要の固定チェック方式です。</div>
       <p id="calendarStatus" class="small">本日の重要イベントを確認中です。</p>
       <div id="eventList" class="small">本日の重要イベントを表示します。</div>
     </section>
@@ -318,7 +318,7 @@
         <div class="statBox">順張り勝率<strong id="trendWinRate">--</strong></div>
         <div class="statBox">逆張り勝率<strong id="counterWinRate">--</strong></div>
       </div>
-      <h3>v4.4 検証ダッシュボード</h3>
+      <h3>v4.5 検証ダッシュボード</h3>
       <div class="insightGrid">
         <div class="insightBox"><strong id="bestHourView">--</strong><span>勝ちやすい時間帯</span></div>
         <div class="insightBox"><strong id="bestJudgeView">--</strong><span>勝ちやすい判定</span></div>
@@ -852,8 +852,8 @@
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v4.4順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        reasons.push(`v4.4逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`v4.5順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v4.5逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
         reasons.push(`期待勝率：${expected.rate}%（${expected.label}）。根拠：${expected.notes.join(" / ") || "標準条件"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
         badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
@@ -1131,10 +1131,27 @@
       return position.side === "buy" ? (price - position.entryPrice) * 100 : (position.entryPrice - price) * 100;
     }
 
-    function getPositionAdvice(pips, elapsedMin, rrInfo) {
+    function getDotenAdvice(position, judge) {
+      if (!position || !judge) return null;
+      const buyExitSignals = ["買い優勢", "強い買い", "買い優勢・入口待ち", "押し目待ち"];
+      const sellExitSignals = ["売り優勢", "強い売り", "売り優勢・入口待ち", "戻り待ち", "戻り売り待ち"];
+      if (position.side === "sell") {
+        if (judge === "買い入口" || judge === "強い買い入口") return { text: "ドテン買い候補：売り保有中に買い入口が出ています。売り決済後の買い転換を検討してください。", cls: "adviceCut" };
+        if (buyExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "売り撤退推奨：売り保有中に買い方向へ傾いています。入口確定までは即ドテンせず、まず売り撤退を優先してください。", cls: "adviceCut" };
+      }
+      if (position.side === "buy") {
+        if (judge === "売り入口" || judge === "強い売り入口") return { text: "ドテン売り候補：買い保有中に売り入口が出ています。買い決済後の売り転換を検討してください。", cls: "adviceCut" };
+        if (sellExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "買い撤退推奨：買い保有中に売り方向へ傾いています。入口確定までは即ドテンせず、まず買い撤退を優先してください。", cls: "adviceCut" };
+      }
+      return null;
+    }
+
+    function getPositionAdvice(pips, elapsedMin, rrInfo, position) {
       const activeEventRisk = getActiveEventRisk();
       const rr = rrInfo?.ratio;
       if (activeEventRisk.active) return { text: `🚫 イベント警戒中、保有非推奨：${activeEventRisk.event.title} の警戒日です。新規・保有とも慎重にしてください。`, cls: "adviceCut" };
+      const dotenAdvice = getDotenAdvice(position, lastJudgeText);
+      if (dotenAdvice) return dotenAdvice;
       if (pips === null) return { text: "現在価格を取得すると、ポジション管理アドバイスを表示します。", cls: "adviceHold" };
       if (pips <= -5) return { text: "🔴 損切り推奨：-5pips以下です。想定と逆に動いているため損失限定を優先してください。", cls: "adviceCut" };
       if (pips >= 12) return { text: "🔴 利確推奨：+12pips以上です。スキャルピングとして十分伸びています。", cls: "adviceTake" };
@@ -1205,7 +1222,7 @@
       if (yenView) yenView.textContent = formatYen(yenProfit);
       if (rrView) rrView.textContent = rrInfo ? `1 : ${rrInfo.ratio.toFixed(1)}` : "--";
       entryTimeView.textContent = entryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      const advice = getPositionAdvice(pips, elapsedMin, rrInfo);
+      const advice = getPositionAdvice(pips, elapsedMin, rrInfo, activePosition);
       adviceView.textContent = advice.text;
       adviceView.className = "adviceBox " + advice.cls;
     }
