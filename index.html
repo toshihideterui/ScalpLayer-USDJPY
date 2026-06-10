@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
-  <meta name="scalplayer-version" content="4.5" />
+  <meta name="scalplayer-version" content="4.7" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v4.5</title>
+  <title>ScalpLayer USDJPY v4.7</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -127,13 +127,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v4.5</h1>
+      <h1>ScalpLayer USDJPY v4.7</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v4.5：ポジション保有中のドテン判定を正式追加しました。反対方向の優勢では撤退推奨、入口確定ではドテン候補を表示します。<br><span class="small">更新確認用：v4.5</span></section>
+    <section class="card update">v4.7：資金管理ガード、損切り到達アラート、損切り実行、ドテン実行補助を統合しました。Lot過大時はエントリー前に警告します。<br><span class="small">更新確認用：v4.7</span></section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -148,7 +148,7 @@
       <p class="small">CPI・雇用統計（NFP）・FOMC・ISM製造業景況指数・ADP雇用統計・小売売上高を固定チェックします。重要イベント候補日は終日警戒、それ以外の日は通常取引可能として表示します。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
 
-      <div class="eventSafe">v4.5: 経済指標はAPIキー不要の固定チェック方式です。</div>
+      <div class="eventSafe">v4.7: 経済指標はAPIキー不要の固定チェック方式です。</div>
       <p id="calendarStatus" class="small">本日の重要イベントを確認中です。</p>
       <div id="eventList" class="small">本日の重要イベントを表示します。</div>
     </section>
@@ -255,9 +255,39 @@
       <ul id="reasons" class="reasonList"><li>まだ分析していません。</li></ul>
     </section>
 
+    <section class="card">
+      <h2>⑤ 資金管理ガード</h2>
+      <p class="small">口座残高とLot、損切り幅から、エントリー前の過大リスクを確認します。</p>
+      <div class="grid">
+        <div>
+          <label for="accountBalanceInput">口座残高</label>
+          <input id="accountBalanceInput" type="number" min="1" step="100" value="10000" />
+        </div>
+        <div>
+          <label for="riskLotInput">Lot数</label>
+          <input id="riskLotInput" type="number" min="0.01" step="0.01" value="0.1" />
+        </div>
+        <div>
+          <label for="stopLossPipsInput">損切りpips</label>
+          <input id="stopLossPipsInput" type="number" min="0.1" step="0.1" value="5" />
+        </div>
+        <div>
+          <label for="riskPercentInput">許容損失率</label>
+          <input id="riskPercentInput" type="number" min="0.1" step="0.1" value="3" />
+        </div>
+      </div>
+      <div class="grid">
+        <div class="statBox">想定損失額<strong id="estimatedLossView">--</strong></div>
+        <div class="statBox">リスク<strong id="riskPercentView">--</strong></div>
+        <div class="statBox">推奨Lot<strong id="recommendedLotView">--</strong></div>
+        <div class="statBox">危険度<strong id="riskDangerView">--</strong></div>
+      </div>
+      <div id="riskDetailView" class="adviceBox adviceHold">資金管理を計算すると、エントリー前の危険度を表示します。</div>
+    </section>
+
 
     <section class="card">
-      <h2>⑤ ポジション管理</h2>
+      <h2>⑥ ポジション管理</h2>
       <p class="small">ScalpLayerのサインに従ってエントリーした時に押してください。エントリー価格と時刻を保存し、現在価格との差から保有判断を表示します。</p>
       <div class="grid">
         <button class="green" onclick="openPosition('buy')">買いでエントリー</button>
@@ -280,6 +310,10 @@
           <div class="statBox">現在損益円<strong id="positionYenView">--</strong></div>
           <div class="statBox">エントリー時刻<strong id="entryTimeView">--</strong></div>
           <div class="statBox">RR比<strong id="rrView">--</strong></div>
+          <div class="statBox">口座残高<strong id="positionBalanceView">--</strong></div>
+          <div class="statBox">想定損失<strong id="positionEstimatedLossView">--</strong></div>
+          <div class="statBox">リスク<strong id="positionRiskPercentView">--</strong></div>
+          <div class="statBox">推奨Lot<strong id="positionRecommendedLotView">--</strong></div>
         </div>
         <label for="entryPriceEdit">エントリー価格を修正</label>
         <div class="grid">
@@ -293,12 +327,18 @@
         <input id="takeProfitPriceInput" type="number" step="0.001" placeholder="例：157.400" />
         <button class="blue" onclick="saveRiskPrices()">損切り/利確価格を保存</button>
         <p id="riskPriceStatus" class="small">損切り価格と利確価格を保存するとRR比を表示します。</p>
+        <div id="stopLossAlertStatus" class="adviceBox adviceHold">損切り価格到達アラート：待機中</div>
+        <div class="grid">
+          <button class="red" onclick="executeStopLoss()">損切り実行済み</button>
+          <button class="green" onclick="executeDoten('buy')">ドテン買い実行済み</button>
+          <button class="blue" onclick="executeDoten('sell')">ドテン売り実行済み</button>
+        </div>
         <div id="positionAdvice" class="adviceBox adviceHold">ポジションはまだ記録されていません。</div>
       </div>
     </section>
 
     <section class="card">
-      <h2>⑥ トレード記録</h2>
+      <h2>⑦ トレード記録</h2>
       <label for="tradeResult">結果</label>
       <select id="tradeResult"><option value="win">勝ち</option><option value="lose">負け</option><option value="draw">引き分け</option></select>
       <label for="tradePips">獲得pips</label>
@@ -318,7 +358,7 @@
         <div class="statBox">順張り勝率<strong id="trendWinRate">--</strong></div>
         <div class="statBox">逆張り勝率<strong id="counterWinRate">--</strong></div>
       </div>
-      <h3>v4.5 検証ダッシュボード</h3>
+      <h3>v4.7 検証ダッシュボード</h3>
       <div class="insightGrid">
         <div class="insightBox"><strong id="bestHourView">--</strong><span>勝ちやすい時間帯</span></div>
         <div class="insightBox"><strong id="bestJudgeView">--</strong><span>勝ちやすい判定</span></div>
@@ -335,9 +375,9 @@
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
-    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v4_4";
-    const POSITION_STORAGE = "scalplayer_usdjpy_position_v3_1";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v4_4";
+    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v4_7";
+    const POSITION_STORAGE = "scalplayer_usdjpy_position_v4_7";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v4_7";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
@@ -351,7 +391,7 @@
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      loadStats(); loadTradeHistory(); loadPosition(); loadImportantEvents(); refreshEconomicEvents(); updateStatsView(); updateTradeInsights(); updateAutoButtonView(); updateAlertButtonView(); updatePositionPanel(); renderEventPanel(); setInterval(() => { updatePositionPanel(); renderEventPanel(); }, 30000);
+      loadStats(); loadTradeHistory(); loadPosition(); syncRiskInputsFromPosition(); loadImportantEvents(); refreshEconomicEvents(); updateStatsView(); updateTradeInsights(); updateAutoButtonView(); updateAlertButtonView(); setupRiskManagementInputs(); renderRiskManagement(); updatePositionPanel(); renderEventPanel(); setInterval(() => { renderRiskManagement(); updatePositionPanel(); renderEventPanel(); }, 30000);
     });
 
     function saveApiKey() {
@@ -803,9 +843,9 @@
         judge = counterHigh ? "売り慎重" : "売り入口"; cls = counterHigh ? "result prep" : "result sell"; plan = counterHigh ? "小ロット/待ち" : "順張り売り";
         detail = counterHigh ? "売り条件はありますが過熱感も強いので、飛び乗りは避けます。" : "順張り方向と1分足入口が揃っています。";
       } else if (trend.direction === "buy") {
-        judge = "買い優勢・入口待ち"; cls = "result prep"; plan = "買い待ち"; detail = "方向は上ですが、1分足の入口か押し目確認を待ちます。";
+        judge = "🟡 押し目待ち"; cls = "result prep"; plan = "押し目待ち"; detail = "新規買いはまだ待機。方向は上ですが、1分足の入口か押し目確認を待ちます。";
       } else if (trend.direction === "sell") {
-        judge = "売り優勢・入口待ち"; cls = "result prep"; plan = "売り待ち"; detail = "方向は下ですが、1分足の入口か戻り確認を待ちます。";
+        judge = "🟠 戻り売り待ち"; cls = "result prep"; plan = "戻り売り待ち"; detail = "新規売りはまだ待機。方向は下ですが、1分足の入口か戻り確認を待ちます。";
       }
       return { judge, cls, plan, detail };
     }
@@ -852,8 +892,8 @@
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v4.5順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        reasons.push(`v4.5逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`v4.7順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v4.7逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
         reasons.push(`期待勝率：${expected.rate}%（${expected.label}）。根拠：${expected.notes.join(" / ") || "標準条件"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
         badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
@@ -998,6 +1038,107 @@
       return Number.isFinite(value) ? value : null;
     }
 
+    function setupRiskManagementInputs() {
+      ["accountBalanceInput", "riskLotInput", "stopLossPipsInput", "riskPercentInput"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", () => {
+          if (id === "riskLotInput") {
+            const positionLot = document.getElementById("positionLotInput");
+            if (positionLot) positionLot.value = el.value;
+          }
+          renderRiskManagement();
+        });
+      });
+      const positionLot = document.getElementById("positionLotInput");
+      if (positionLot) positionLot.addEventListener("input", () => {
+        const riskLot = document.getElementById("riskLotInput");
+        if (riskLot) riskLot.value = positionLot.value;
+        renderRiskManagement();
+      });
+    }
+
+    function getRiskInputs() {
+      return {
+        accountBalance: getInputNumber("accountBalanceInput"),
+        lot: getInputNumber("riskLotInput") || getPositionLot(),
+        stopLossPips: getInputNumber("stopLossPipsInput"),
+        allowedRiskPercent: getInputNumber("riskPercentInput") || 3
+      };
+    }
+
+    function calculateRiskSnapshot() {
+      const input = getRiskInputs();
+      const valid = input.accountBalance > 0 && input.lot > 0 && input.stopLossPips > 0 && input.allowedRiskPercent > 0;
+      if (!valid) {
+        return { ...input, valid: false, estimatedLoss: null, riskPercent: null, recommendedLot: null, dangerText: "--", dangerClass: "adviceHold", detail: "口座残高、Lot数、損切りpipsを正しく入力してください。" };
+      }
+      const estimatedLoss = input.stopLossPips * input.lot * 1000;
+      const riskPercent = estimatedLoss / input.accountBalance * 100;
+      const recommendedLot = input.accountBalance * input.allowedRiskPercent / 100 / input.stopLossPips / 1000;
+      let dangerText = "🟢 適正リスク";
+      let dangerClass = "adviceHold";
+      let detail = "1〜3%の範囲です。資金に対して無理の少ないLotです。";
+      if (riskPercent < 1) {
+        dangerText = "🟢 低リスク";
+        detail = "1%未満です。かなり控えめなLotです。";
+      } else if (riskPercent >= 30) {
+        dangerText = "🚫 エントリー非推奨";
+        dangerClass = "adviceCut";
+        detail = "このLotでは5pips前後の逆行でも資金を大きく失います。Lotを下げてください。";
+      } else if (riskPercent >= 10) {
+        dangerText = "🔴 ロット過大";
+        dangerClass = "adviceCut";
+        detail = "損切り前に資金が大きく削られます。推奨Lotまで下げる判断を優先してください。";
+      } else if (riskPercent >= 5) {
+        dangerText = "🟠 危険";
+        dangerClass = "adviceTake";
+        detail = "5〜10%のリスクです。連敗に耐えにくいためLot調整を検討してください。";
+      } else if (riskPercent > 3) {
+        dangerText = "🟡 やや大きい";
+        dangerClass = "adviceTake";
+        detail = "3〜5%のリスクです。許容損失率に近づけるならLotを下げてください。";
+      }
+      return { ...input, valid: true, estimatedLoss, riskPercent, recommendedLot, dangerText, dangerClass, detail };
+    }
+
+    function renderRiskManagement() {
+      const risk = calculateRiskSnapshot();
+      const lossView = document.getElementById("estimatedLossView");
+      const riskView = document.getElementById("riskPercentView");
+      const lotView = document.getElementById("recommendedLotView");
+      const dangerView = document.getElementById("riskDangerView");
+      const detailView = document.getElementById("riskDetailView");
+      if (lossView) lossView.textContent = risk.valid ? `-${Math.round(risk.estimatedLoss).toLocaleString()}円` : "--";
+      if (riskView) riskView.textContent = risk.valid ? `${risk.riskPercent.toFixed(1)}%` : "--";
+      if (lotView) lotView.textContent = risk.valid ? risk.recommendedLot.toFixed(2) : "--";
+      if (dangerView) dangerView.textContent = risk.dangerText;
+      if (detailView) {
+        detailView.textContent = risk.valid
+          ? `${risk.detail} 想定損失は-${Math.round(risk.estimatedLoss).toLocaleString()}円、リスクは${risk.riskPercent.toFixed(1)}%です。`
+          : risk.detail;
+        detailView.className = "adviceBox " + risk.dangerClass;
+      }
+      return risk;
+    }
+
+    function confirmRiskBeforeEntry(risk) {
+      if (!risk.valid || risk.riskPercent < 10) return true;
+      const strong = risk.riskPercent >= 30
+        ? `🚫 エントリー非推奨\n想定損失 -${Math.round(risk.estimatedLoss).toLocaleString()}円 / リスク ${risk.riskPercent.toFixed(1)}%\n\n`
+        : `🔴 ロット過大\n想定損失 -${Math.round(risk.estimatedLoss).toLocaleString()}円 / リスク ${risk.riskPercent.toFixed(1)}%\n\n`;
+      return confirm(strong + "このLotは口座残高に対して危険です。\nこのまま記録しますか？");
+    }
+
+    function applyRiskSnapshotToPosition(position, risk) {
+      position.accountBalance = Number.isFinite(Number(risk.accountBalance)) ? Number(risk.accountBalance) : null;
+      position.lot = Number.isFinite(Number(risk.lot)) && Number(risk.lot) > 0 ? Number(risk.lot) : getPositionLot();
+      position.stopLossPips = Number.isFinite(Number(risk.stopLossPips)) ? Number(risk.stopLossPips) : null;
+      position.estimatedLoss = Number.isFinite(Number(risk.estimatedLoss)) ? Number(risk.estimatedLoss) : null;
+      position.riskPercent = Number.isFinite(Number(risk.riskPercent)) ? Number(risk.riskPercent) : null;
+      position.recommendedLot = Number.isFinite(Number(risk.recommendedLot)) ? Number(risk.recommendedLot) : null;
+      return position;
+    }
+
     function getPositionLot() {
       const value = getInputNumber("positionLotInput");
       return value && value > 0 ? value : 0.1;
@@ -1033,7 +1174,9 @@
         alert("先に自動分析を実行して現在価格を取得してください。");
         return;
       }
-      const lot = getPositionLot();
+      const risk = renderRiskManagement();
+      if (!confirmRiskBeforeEntry(risk)) return;
+      const lot = Number.isFinite(Number(risk.lot)) && Number(risk.lot) > 0 ? Number(risk.lot) : getPositionLot();
       const label = side === "buy" ? "買い" : "売り";
       if (activePosition && !confirm("現在のポジションを上書きして、" + label + "で記録しますか？")) return;
       activePosition = {
@@ -1044,8 +1187,10 @@
         takeProfitPrice: getInputNumber("takeProfitPriceInput"),
         entryTime: new Date().toISOString(),
         entryJudge: lastJudgeText,
-        entrySnapshot: { ...lastSnapshot }
+        entrySnapshot: { ...lastSnapshot },
+        stopLossAlerted: false
       };
+      applyRiskSnapshotToPosition(activePosition, risk);
       localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
       updatePositionPanel();
     }
@@ -1092,6 +1237,9 @@
         return;
       }
       activePosition.lot = lot;
+      const riskLot = document.getElementById("riskLotInput");
+      if (riskLot) riskLot.value = lot.toString();
+      applyRiskSnapshotToPosition(activePosition, renderRiskManagement());
       localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
       if (status) status.textContent = "Lot数を修正しました";
       updatePositionPanel({ keepLotStatus: true });
@@ -1126,22 +1274,43 @@
       } catch(e) { activePosition = null; }
     }
 
+    function syncRiskInputsFromPosition() {
+      if (!activePosition) return;
+      const accountInput = document.getElementById("accountBalanceInput");
+      const riskLotInput = document.getElementById("riskLotInput");
+      const stopLossPipsInput = document.getElementById("stopLossPipsInput");
+      if (accountInput && Number.isFinite(Number(activePosition.accountBalance))) accountInput.value = Number(activePosition.accountBalance).toString();
+      if (riskLotInput && Number.isFinite(Number(activePosition.lot))) riskLotInput.value = Number(activePosition.lot).toString();
+      if (stopLossPipsInput && Number.isFinite(Number(activePosition.stopLossPips))) stopLossPipsInput.value = Number(activePosition.stopLossPips).toString();
+    }
+
     function getPositionPips(position, price) {
       if (!position || !Number.isFinite(price)) return null;
       return position.side === "buy" ? (price - position.entryPrice) * 100 : (position.entryPrice - price) * 100;
     }
 
+    function isStopLossHit(position, price) {
+      if (!position || !Number.isFinite(price)) return false;
+      const stop = Number(position.stopLossPrice);
+      if (!Number.isFinite(stop) || stop <= 0) return false;
+      return position.side === "buy" ? price <= stop : price >= stop;
+    }
+
+    function playStopLossAlert() {
+      playAlertSound("test");
+    }
+
     function getDotenAdvice(position, judge) {
       if (!position || !judge) return null;
-      const buyExitSignals = ["買い優勢", "強い買い", "買い優勢・入口待ち", "押し目待ち"];
-      const sellExitSignals = ["売り優勢", "強い売り", "売り優勢・入口待ち", "戻り待ち", "戻り売り待ち"];
+      const buyExitSignals = ["買い優勢", "強い買い", "押し目待ち", "🟡 押し目待ち"];
+      const sellExitSignals = ["売り優勢", "強い売り", "戻り待ち", "戻り売り待ち", "🟠 戻り売り待ち"];
       if (position.side === "sell") {
-        if (judge === "買い入口" || judge === "強い買い入口") return { text: "ドテン買い候補：売り保有中に買い入口が出ています。売り決済後の買い転換を検討してください。", cls: "adviceCut" };
-        if (buyExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "売り撤退推奨：売り保有中に買い方向へ傾いています。入口確定までは即ドテンせず、まず売り撤退を優先してください。", cls: "adviceCut" };
+        if (judge === "買い入口" || judge === "強い買い入口") return { text: "売り決済推奨 / ドテン買い候補：売り保有中に買い入口が確定しています。実際の決済と新規注文は取引画面で行ってください。", cls: "adviceCut" };
+        if (buyExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "売り撤退検討：売り保有中に買い方向へ傾いています。入口待ち段階では即ドテンせず、まず売り撤退を検討してください。", cls: "adviceTake" };
       }
       if (position.side === "buy") {
-        if (judge === "売り入口" || judge === "強い売り入口") return { text: "ドテン売り候補：買い保有中に売り入口が出ています。買い決済後の売り転換を検討してください。", cls: "adviceCut" };
-        if (sellExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "買い撤退推奨：買い保有中に売り方向へ傾いています。入口確定までは即ドテンせず、まず買い撤退を優先してください。", cls: "adviceCut" };
+        if (judge === "売り入口" || judge === "強い売り入口") return { text: "買い決済推奨 / ドテン売り候補：買い保有中に売り入口が確定しています。実際の決済と新規注文は取引画面で行ってください。", cls: "adviceCut" };
+        if (sellExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "買い撤退検討：買い保有中に売り方向へ傾いています。入口待ち段階では即ドテンせず、まず買い撤退を検討してください。", cls: "adviceTake" };
       }
       return null;
     }
@@ -1170,8 +1339,13 @@
       const pipsView = document.getElementById("positionPipsView");
       const yenView = document.getElementById("positionYenView");
       const rrView = document.getElementById("rrView");
+      const balanceView = document.getElementById("positionBalanceView");
+      const estimatedLossView = document.getElementById("positionEstimatedLossView");
+      const riskPercentView = document.getElementById("positionRiskPercentView");
+      const recommendedLotView = document.getElementById("positionRecommendedLotView");
       const entryTimeView = document.getElementById("entryTimeView");
       const adviceView = document.getElementById("positionAdvice");
+      const stopLossAlertView = document.getElementById("stopLossAlertStatus");
       const entryPriceEdit = document.getElementById("entryPriceEdit");
       const editStatus = document.getElementById("entryPriceEditStatus");
       const lotInput = document.getElementById("positionLotInput");
@@ -1187,6 +1361,10 @@
         pipsView.textContent = "--";
         if (yenView) yenView.textContent = "--";
         if (rrView) rrView.textContent = "--";
+        if (balanceView) balanceView.textContent = "--";
+        if (estimatedLossView) estimatedLossView.textContent = "--";
+        if (riskPercentView) riskPercentView.textContent = "--";
+        if (recommendedLotView) recommendedLotView.textContent = "--";
         entryTimeView.textContent = "--";
         if (entryPriceEdit) entryPriceEdit.value = "";
         if (lotInput && !lotInput.value) lotInput.value = "0.1";
@@ -1195,6 +1373,10 @@
         if (editStatus && !options.keepEditStatus) editStatus.textContent = "ポジション記録後にエントリー価格を修正できます。";
         if (lotStatus && !options.keepLotStatus) lotStatus.textContent = "初期値は0.1 Lotです。";
         if (riskStatus && !options.keepRiskStatus) riskStatus.textContent = "損切り価格と利確価格を保存するとRR比を表示します。";
+        if (stopLossAlertView) {
+          stopLossAlertView.textContent = "損切り価格到達アラート：待機中";
+          stopLossAlertView.className = "adviceBox adviceHold";
+        }
         adviceView.textContent = "ポジションはまだ記録されていません。サインに従って入った時に、買い/売りエントリーボタンを押してください。";
         adviceView.className = "adviceBox adviceHold";
         return;
@@ -1221,7 +1403,30 @@
       pipsView.textContent = pips === null ? "--" : `${pips >= 0 ? "+" : ""}${pips.toFixed(1)}pips`;
       if (yenView) yenView.textContent = formatYen(yenProfit);
       if (rrView) rrView.textContent = rrInfo ? `1 : ${rrInfo.ratio.toFixed(1)}` : "--";
+      if (balanceView) balanceView.textContent = Number.isFinite(Number(activePosition.accountBalance)) ? `${Math.round(Number(activePosition.accountBalance)).toLocaleString()}円` : "--";
+      if (estimatedLossView) estimatedLossView.textContent = Number.isFinite(Number(activePosition.estimatedLoss)) ? `-${Math.round(Number(activePosition.estimatedLoss)).toLocaleString()}円` : "--";
+      if (riskPercentView) riskPercentView.textContent = Number.isFinite(Number(activePosition.riskPercent)) ? `${Number(activePosition.riskPercent).toFixed(1)}%` : "--";
+      if (recommendedLotView) recommendedLotView.textContent = Number.isFinite(Number(activePosition.recommendedLot)) ? Number(activePosition.recommendedLot).toFixed(2) : "--";
       entryTimeView.textContent = entryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const stopLossHit = isStopLossHit(activePosition, price);
+      if (stopLossAlertView) {
+        if (stopLossHit) {
+          stopLossAlertView.textContent = "🔴 損切り価格到達\n今すぐ決済してください";
+          stopLossAlertView.className = "adviceBox adviceCut";
+          if (!activePosition.stopLossAlerted) {
+            activePosition.stopLossAlerted = true;
+            localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
+            playStopLossAlert();
+          }
+        } else {
+          stopLossAlertView.textContent = "損切り価格到達アラート：監視中";
+          stopLossAlertView.className = "adviceBox adviceHold";
+          if (activePosition.stopLossAlerted) {
+            activePosition.stopLossAlerted = false;
+            localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
+          }
+        }
+      }
       const advice = getPositionAdvice(pips, elapsedMin, rrInfo, activePosition);
       adviceView.textContent = advice.text;
       adviceView.className = "adviceBox " + advice.cls;
@@ -1240,20 +1445,25 @@
         if (pips < 0) document.getElementById("tradeResult").value = "lose";
       }
       const finalResult = document.getElementById("tradeResult").value;
+      saveTradeRecord(finalResult, pips, activePosition, "手動記録");
+      if (pipsInput) pipsInput.value = "";
+    }
+
+    function saveTradeRecord(finalResult, pips, sourcePosition = activePosition, closeReason = "手動記録") {
       if (finalResult === "win") wins++;
       if (finalResult === "lose") loses++;
       if (finalResult === "draw") draws++;
       totalTrades++;
-
       const now = new Date();
-      const side = activePosition ? activePosition.side : inferSideFromJudge(lastJudgeText);
-      const entrySnapshot = activePosition?.entrySnapshot || lastSnapshot;
-      const lot = Number(activePosition?.lot || getPositionLot());
+      const side = sourcePosition ? sourcePosition.side : inferSideFromJudge(lastJudgeText);
+      const entrySnapshot = sourcePosition?.entrySnapshot || lastSnapshot;
+      const lot = Number(sourcePosition?.lot || getPositionLot());
       const yenProfit = calculateYenProfit(pips, lot);
-      const rrInfo = calculateRR(activePosition);
+      const rrInfo = calculateRR(sourcePosition);
       const trade = {
         id: Date.now(),
         result: finalResult,
+        closeReason,
         time: now.toISOString(),
         hour: now.getHours(),
         weekday: now.getDay(),
@@ -1263,14 +1473,19 @@
         pips,
         yenProfit,
         rrRatio: rrInfo ? rrInfo.ratio : null,
-        stopLossPrice: Number.isFinite(Number(activePosition?.stopLossPrice)) ? Number(activePosition.stopLossPrice) : null,
-        takeProfitPrice: Number.isFinite(Number(activePosition?.takeProfitPrice)) ? Number(activePosition.takeProfitPrice) : null,
+        stopLossPrice: Number.isFinite(Number(sourcePosition?.stopLossPrice)) ? Number(sourcePosition.stopLossPrice) : null,
+        takeProfitPrice: Number.isFinite(Number(sourcePosition?.takeProfitPrice)) ? Number(sourcePosition.takeProfitPrice) : null,
+        accountBalance: Number.isFinite(Number(sourcePosition?.accountBalance)) ? Number(sourcePosition.accountBalance) : null,
+        stopLossPips: Number.isFinite(Number(sourcePosition?.stopLossPips)) ? Number(sourcePosition.stopLossPips) : null,
+        estimatedLoss: Number.isFinite(Number(sourcePosition?.estimatedLoss)) ? Number(sourcePosition.estimatedLoss) : null,
+        riskPercent: Number.isFinite(Number(sourcePosition?.riskPercent)) ? Number(sourcePosition.riskPercent) : null,
+        recommendedLot: Number.isFinite(Number(sourcePosition?.recommendedLot)) ? Number(sourcePosition.recommendedLot) : null,
         price: entrySnapshot.price,
         env: entrySnapshot.env,
         setup: entrySnapshot.setup,
         one: entrySnapshot.one,
         distance: entrySnapshot.distance,
-        entryPrice: activePosition ? activePosition.entryPrice : null,
+        entryPrice: sourcePosition ? sourcePosition.entryPrice : null,
         trendScore: Number.isFinite(Number(entrySnapshot.trendScore)) ? Number(entrySnapshot.trendScore) : null,
         counterScore: Number.isFinite(Number(entrySnapshot.counterScore)) ? Number(entrySnapshot.counterScore) : null,
         expectedRate: Number.isFinite(Number(entrySnapshot.expectedRate)) ? Number(entrySnapshot.expectedRate) : null,
@@ -1285,7 +1500,59 @@
       saveTradeHistory();
       updateStatsView();
       updateTradeInsights();
-      if (pipsInput) pipsInput.value = "";
+    }
+
+    function closeActivePositionWithRecord(closeReason, forcedResult = null) {
+      if (!activePosition) {
+        alert("終了するポジションがありません。");
+        return null;
+      }
+      const price = Number(lastKnownPrice || document.getElementById("currentPrice").textContent);
+      const pips = getPositionPips(activePosition, price);
+      if (!Number.isFinite(pips)) {
+        alert("現在価格を取得してから実行してください。");
+        return null;
+      }
+      const closedPosition = { ...activePosition };
+      const result = forcedResult || (pips > 0 ? "win" : pips < 0 ? "lose" : "draw");
+      saveTradeRecord(result, Number(pips.toFixed(1)), closedPosition, closeReason);
+      activePosition = null;
+      localStorage.removeItem(POSITION_STORAGE);
+      updatePositionPanel();
+      return { closedPosition, pips };
+    }
+
+    function executeStopLoss() {
+      if (!confirm("損切り実行済みとしてポジションを終了し、負け記録に保存しますか？")) return;
+      closeActivePositionWithRecord("損切り実行", "lose");
+    }
+
+    function executeDoten(nextSide) {
+      const label = nextSide === "buy" ? "ドテン買い" : "ドテン売り";
+      if (!confirm(label + "実行済みとして、現在ポジションを記録終了し、反対ポジションを現在価格で新規記録しますか？")) return;
+      const price = Number(lastKnownPrice || document.getElementById("currentPrice").textContent);
+      if (!Number.isFinite(price) || price <= 0) {
+        alert("現在価格を取得してから実行してください。");
+        return;
+      }
+      const risk = renderRiskManagement();
+      if (!confirmRiskBeforeEntry(risk)) return;
+      const closed = closeActivePositionWithRecord(label);
+      if (!closed) return;
+      activePosition = {
+        side: nextSide,
+        entryPrice: price,
+        lot: Number.isFinite(Number(risk.lot)) && Number(risk.lot) > 0 ? Number(risk.lot) : getPositionLot(),
+        stopLossPrice: getInputNumber("stopLossPriceInput"),
+        takeProfitPrice: getInputNumber("takeProfitPriceInput"),
+        entryTime: new Date().toISOString(),
+        entryJudge: lastJudgeText,
+        entrySnapshot: { ...lastSnapshot },
+        stopLossAlerted: false
+      };
+      applyRiskSnapshotToPosition(activePosition, risk);
+      localStorage.setItem(POSITION_STORAGE, JSON.stringify(activePosition));
+      updatePositionPanel();
     }
 
     function classifyEntryMode(snapshot) {
@@ -1312,10 +1579,13 @@
       const pipsText = Number.isFinite(Number(trade.pips)) ? `${Number(trade.pips) >= 0 ? "+" : ""}${Number(trade.pips).toFixed(1)}pips` : "--";
       const yenText = formatYen(Number(trade.yenProfit));
       const rrText = Number.isFinite(Number(trade.rrRatio)) ? `1:${Number(trade.rrRatio).toFixed(1)}` : "--";
+      const riskText = Number.isFinite(Number(trade.riskPercent)) ? `${Number(trade.riskPercent).toFixed(1)}%` : "--";
+      const estimatedLossText = Number.isFinite(Number(trade.estimatedLoss)) ? `-${Math.round(Number(trade.estimatedLoss)).toLocaleString()}円` : "--";
+      const recommendedLotText = Number.isFinite(Number(trade.recommendedLot)) ? Number(trade.recommendedLot).toFixed(2) : "--";
       const modeText = trade.entryMode === "trend" ? "順張り" : trade.entryMode === "counter" ? "逆張り" : "未分類";
       const item = document.createElement("div");
       item.className = "logItem";
-      item.innerHTML = `${escapeHtml(dt.toLocaleString())}｜<span class="${resultClass}">${resultText}</span>｜${escapeHtml(sideText)}｜Lot:${escapeHtml(trade.lot ?? "--")}｜${escapeHtml(pipsText)}｜${escapeHtml(yenText)}｜RR:${escapeHtml(rrText)}｜SL:${escapeHtml(trade.stopLossPrice ?? "--")} / TP:${escapeHtml(trade.takeProfitPrice ?? "--")}｜${escapeHtml(modeText)}｜順:${escapeHtml(trade.trendScore ?? "--")} / 逆:${escapeHtml(trade.counterScore ?? "--")} / 期待:${escapeHtml(trade.expectedRate ?? "--")}%｜時間帯:${escapeHtml(trade.sessionName || "--")}｜判定：${escapeHtml(trade.judge)}｜価格：${escapeHtml(trade.price)}`;
+      item.innerHTML = `${escapeHtml(dt.toLocaleString())}｜<span class="${resultClass}">${resultText}</span>｜${escapeHtml(trade.closeReason || "手動記録")}｜${escapeHtml(sideText)}｜Lot:${escapeHtml(trade.lot ?? "--")}｜${escapeHtml(pipsText)}｜${escapeHtml(yenText)}｜リスク:${escapeHtml(riskText)}｜想定損失:${escapeHtml(estimatedLossText)}｜推奨Lot:${escapeHtml(recommendedLotText)}｜RR:${escapeHtml(rrText)}｜SL:${escapeHtml(trade.stopLossPrice ?? "--")} / TP:${escapeHtml(trade.takeProfitPrice ?? "--")}｜${escapeHtml(modeText)}｜順:${escapeHtml(trade.trendScore ?? "--")} / 逆:${escapeHtml(trade.counterScore ?? "--")} / 期待:${escapeHtml(trade.expectedRate ?? "--")}%｜時間帯:${escapeHtml(trade.sessionName || "--")}｜判定：${escapeHtml(trade.judge)}｜価格：${escapeHtml(trade.price)}`;
       if (log.textContent === "まだ記録はありません。") log.textContent = "";
       log.prepend(item);
     }
@@ -1386,6 +1656,11 @@
         rrRatio: Number.isFinite(Number(t.rrRatio)) ? Number(t.rrRatio) : null,
         stopLossPrice: Number.isFinite(Number(t.stopLossPrice)) ? Number(t.stopLossPrice) : null,
         takeProfitPrice: Number.isFinite(Number(t.takeProfitPrice)) ? Number(t.takeProfitPrice) : null,
+        accountBalance: Number.isFinite(Number(t.accountBalance)) ? Number(t.accountBalance) : null,
+        stopLossPips: Number.isFinite(Number(t.stopLossPips)) ? Number(t.stopLossPips) : null,
+        estimatedLoss: Number.isFinite(Number(t.estimatedLoss)) ? Number(t.estimatedLoss) : null,
+        riskPercent: Number.isFinite(Number(t.riskPercent)) ? Number(t.riskPercent) : null,
+        recommendedLot: Number.isFinite(Number(t.recommendedLot)) ? Number(t.recommendedLot) : null,
         trendScore: Number.isFinite(Number(t.trendScore)) ? Number(t.trendScore) : null,
         counterScore: Number.isFinite(Number(t.counterScore)) ? Number(t.counterScore) : null,
         expectedRate: Number.isFinite(Number(t.expectedRate)) ? Number(t.expectedRate) : null,
@@ -1477,3 +1752,4 @@
   </script>
 </body>
 </html>
+
