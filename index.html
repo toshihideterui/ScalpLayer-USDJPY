@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
-  <meta name="scalplayer-version" content="4.8" />
+  <meta name="scalplayer-version" content="4.9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v4.8</title>
+  <title>ScalpLayer USDJPY v4.9</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -127,13 +127,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v4.8</h1>
+      <h1>ScalpLayer USDJPY v4.9</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v4.8：買い入口/売り入口を押し目・戻り確認型へ改善しました。飛び乗り禁止、EMA接近待ち、資金管理リスクを総合判定に反映します。<br><span class="small">更新確認用：v4.8</span></section>
+    <section class="card update">v4.9：ボリンジャーバンド判定を禁止条件から加点/減点方式へ調整しました。買い準備・売り準備を追加し、サインが出なさすぎる問題を改善します。<br><span class="small">更新確認用：v4.9</span></section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -148,7 +148,7 @@
       <p class="small">CPI・雇用統計（NFP）・FOMC・ISM製造業景況指数・ADP雇用統計・小売売上高を固定チェックします。重要イベント候補日は終日警戒、それ以外の日は通常取引可能として表示します。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
 
-      <div class="eventSafe">v4.8: 経済指標はAPIキー不要の固定チェック方式です。</div>
+      <div class="eventSafe">v4.9: 経済指標はAPIキー不要の固定チェック方式です。</div>
       <p id="calendarStatus" class="small">本日の重要イベントを確認中です。</p>
       <div id="eventList" class="small">本日の重要イベントを表示します。</div>
     </section>
@@ -358,7 +358,7 @@
         <div class="statBox">順張り勝率<strong id="trendWinRate">--</strong></div>
         <div class="statBox">逆張り勝率<strong id="counterWinRate">--</strong></div>
       </div>
-      <h3>v4.8 検証ダッシュボード</h3>
+      <h3>v4.9 検証ダッシュボード</h3>
       <div class="insightGrid">
         <div class="insightBox"><strong id="bestHourView">--</strong><span>勝ちやすい時間帯</span></div>
         <div class="insightBox"><strong id="bestJudgeView">--</strong><span>勝ちやすい判定</span></div>
@@ -375,9 +375,9 @@
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
-    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v4_8";
-    const POSITION_STORAGE = "scalplayer_usdjpy_position_v4_8";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v4_8";
+    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v4_9";
+    const POSITION_STORAGE = "scalplayer_usdjpy_position_v4_9";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v4_9";
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
@@ -605,10 +605,17 @@
       const price = series[index].close;
       const width = upper - lower;
       const near = Math.max(width * 0.15, 0.01);
+      const largeBreak = 0.02;
       let position = "中間";
       if (price >= upper - near) position = "上バンド付近";
       else if (price <= lower + near) position = "下バンド付近";
       else if (Math.abs(price - middle) <= near) position = "ミドル付近";
+      const upperTouch = price >= upper;
+      const lowerTouch = price <= lower;
+      const upperNear = price >= upper - near;
+      const lowerNear = price <= lower + near;
+      const overUpperLarge = price >= upper + largeBreak;
+      const underLowerLarge = price <= lower - largeBreak;
 
       let widthState = "--";
       if (prevRows.length >= period && prevRows.every(v => Number.isFinite(v.close))) {
@@ -628,10 +635,40 @@
         width,
         widthPips: width * 100,
         position,
+        upperTouch,
+        lowerTouch,
+        upperNear,
+        lowerNear,
+        overUpperLarge,
+        underLowerLarge,
         widthState,
         jumpRisk: position === "上バンド付近" || position === "下バンド付近",
         reason: `BB位置:${position} / BB幅:${widthState} / 飛び乗り警戒:${position === "上バンド付近" || position === "下バンド付近" ? "ON" : "OFF"}`
       };
+    }
+
+    function getBollingerEntryScore(side, one, ha5) {
+      const oneBb = one.bb || {};
+      const fiveBb = ha5.bb || {};
+      let score = 0;
+      const notes = [];
+      if (side === "buy") {
+        if (oneBb.upperTouch) { score -= 2; notes.push("1分BB上バンド接触/上抜け：買い-2"); }
+        else if (oneBb.upperNear) { score -= 1; notes.push("1分BB上バンド付近：買い-1"); }
+        if (oneBb.position === "ミドル付近" && one.reversal === "buy") { score += 2; notes.push("1分BBミドル付近で反発：買い+2"); }
+        else if (oneBb.lowerNear && one.signal === "buy") { score += 1; notes.push("1分BB下バンド付近から反発：買い+1"); }
+        if (fiveBb.upperTouch) notes.push("5分BBも上バンド接触のため高値掴み注意");
+        if (fiveBb.position === "ミドル付近") notes.push("5分BBはミドル付近で過熱は弱め");
+      } else {
+        if (oneBb.lowerTouch) { score -= 2; notes.push("1分BB下バンド接触/下抜け：売り-2"); }
+        else if (oneBb.lowerNear) { score -= 1; notes.push("1分BB下バンド付近：売り-1"); }
+        if (oneBb.position === "ミドル付近" && one.reversal === "sell") { score += 2; notes.push("1分BBミドル付近で反落：売り+2"); }
+        else if (oneBb.upperNear && one.signal === "sell") { score += 1; notes.push("1分BB上バンド付近から反落：売り+1"); }
+        if (fiveBb.lowerTouch) notes.push("5分BBも下バンド接触のため安値掴み注意");
+        if (fiveBb.position === "ミドル付近") notes.push("5分BBはミドル付近で過熱は弱め");
+      }
+      if (!notes.length) notes.push("BB補正なし");
+      return { score, notes };
     }
 
     function analyzeHeikinAshi15(series15) {
@@ -883,71 +920,86 @@
       const riskText = Number.isFinite(riskPercent) ? `${riskPercent.toFixed(1)}%` : "--";
       const oneBb = one.bb || { position: "計算不可", widthState: "--", jumpRisk: false };
       const fiveBb = ha5.bb || { position: "計算不可", widthState: "--", jumpRisk: false };
-      const bbJumpBuy = oneBb.position === "上バンド付近" || fiveBb.position === "上バンド付近";
-      const bbJumpSell = oneBb.position === "下バンド付近" || fiveBb.position === "下バンド付近";
-      const bbBuyOk = oneBb.position === "ミドル付近" && !bbJumpBuy;
-      const bbSellOk = oneBb.position === "ミドル付近" && !bbJumpSell;
-      const bbWarning = bbJumpBuy || bbJumpSell;
+      const buyBb = getBollingerEntryScore("buy", one, ha5);
+      const sellBb = getBollingerEntryScore("sell", one, ha5);
+      const bbWarning = oneBb.jumpRisk || fiveBb.jumpRisk;
+      const buyDirectionScore = trend.direction === "buy" ? trend.score : 0;
+      const sellDirectionScore = trend.direction === "sell" ? Math.abs(trend.score) : 0;
+      const buyAdjustedScore = buyDirectionScore + buyBb.score;
+      const sellAdjustedScore = sellDirectionScore + sellBb.score;
       const common = `EMA距離:${distance.toFixed(1)}pips / RSI:${rsiText} / 1分平均足:${haDirection}${haStreakCount}本 / 逆張りスコア:${counter.score}点 / 資金管理リスク:${riskText} / 1分BB位置:${oneBb.position} / 5分BB位置:${fiveBb.position} / BB幅:${oneBb.widthState} / 飛び乗り警戒:${bbWarning ? "ON" : "OFF"}`;
 
       const riskOk = Number.isFinite(riskPercent) && riskPercent < 10;
       const noEvent = !eventRisk.active;
-      const buyTrendOk = trend.direction === "buy" && trend.score >= 5;
-      const sellTrendOk = trend.direction === "sell" && (trend.score <= -5 || trend.text.includes("売り優勢"));
-      const buySetupOk = setup.setup === "buy" || ha5.signal === "buy";
-      const sellSetupOk = setup.setup === "sell" || ha5.signal === "sell";
-      const buyReversalOk = one.signal === "buy" && one.reversal === "buy";
-      const sellReversalOk = one.signal === "sell" && one.reversal === "sell";
-      const distanceOk = distance <= 3;
-      const counterOk = counter.score <= 2;
-      const expectedOk = expected.rate >= 65;
+      const buyTrendOk = trend.direction === "buy" && buyAdjustedScore >= 5;
+      const sellTrendOk = trend.direction === "sell" && sellAdjustedScore >= 5;
+      const buySignalOk = one.signal === "buy";
+      const sellSignalOk = one.signal === "sell";
+      const distanceOk = distance <= 5;
+      const counterOk = counter.score <= 3;
+      const expectedOk = expected.rate >= 60;
+      const buyNotLargeBreak = !oneBb.overUpperLarge;
+      const sellNotLargeBreak = !oneBb.underLowerLarge;
+      const buyEntryChecks = [
+        [buyDirectionScore >= 5, "順張りスコア5点以上"],
+        [counterOk, "逆張りスコア3点以下"],
+        [expectedOk, "期待勝率60%以上"],
+        [distanceOk, "1分EMA距離5pips以内"],
+        [buyNotLargeBreak, "BB上バンドを大きく超えていない"],
+        [buySignalOk, "1分足が買い方向"],
+        [noEvent, "重要イベント警戒なし"],
+        [riskOk, "資金管理リスク10%未満"]
+      ];
+      const sellEntryChecks = [
+        [sellDirectionScore >= 5, "売り方向スコア5点以上"],
+        [counterOk, "逆張りスコア3点以下"],
+        [expectedOk, "期待勝率60%以上"],
+        [distanceOk, "1分EMA距離5pips以内"],
+        [sellNotLargeBreak, "BB下バンドを大きく下抜けていない"],
+        [sellSignalOk, "1分足が売り方向"],
+        [noEvent, "重要イベント警戒なし"],
+        [riskOk, "資金管理リスク10%未満"]
+      ];
+      const buyMissing = buyEntryChecks.filter(([ok]) => !ok).map(([, label]) => label);
+      const sellMissing = sellEntryChecks.filter(([ok]) => !ok).map(([, label]) => label);
+      const buyBbText = `BB補正:${buyBb.score >= 0 ? "+" : ""}${buyBb.score}（${buyBb.notes.join(" / ")}）`;
+      const sellBbText = `BB補正:${sellBb.score >= 0 ? "+" : ""}${sellBb.score}（${sellBb.notes.join(" / ")}）`;
 
-      const buyOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi >= 70) || (one.haDirection === "bull" && haStreakCount >= 5) || counter.score >= 4 || !riskOk || bbJumpBuy;
-      const sellOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi <= 30) || (one.haDirection === "bear" && haStreakCount >= 5) || counter.score >= 4 || !riskOk || bbJumpSell;
-
-      if ((trend.direction === "buy" && buyOverheat) || (trend.direction === "sell" && sellOverheat)) {
-        const bbReason = bbJumpBuy ? "価格が上バンド付近です。買いは飛び乗り禁止 / 押し目待ちです。" : bbJumpSell ? "価格が下バンド付近です。売りは飛び乗り禁止 / 戻り売り待ちです。" : "過熱条件があります。";
-        return {
-          judge: "🚫 飛び乗り禁止",
-          cls: "result wait",
-          plan: "押し目/戻り待ち",
-          detail: `${bbReason} 押し目/戻りを待ってください。今は高値掴み・安値掴みになりやすい状態です。${common}`
-        };
-      }
-
-      if (buyTrendOk && counterOk && expectedOk && distanceOk && buySetupOk && buyReversalOk && noEvent && riskOk && bbBuyOk) {
+      if (buyTrendOk && counterOk && expectedOk && distanceOk && buyNotLargeBreak && buySignalOk && noEvent && riskOk) {
         return {
           judge: "🟢 買い入口",
           cls: "result buy",
-          plan: "押し目後の買い",
-          detail: `買い入口候補：ミドルライン付近まで押して、1分足が再上昇しています。順張り5点以上、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分買い準備、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
+          plan: "買い入口",
+          detail: `買い入口：条件が揃っています。BBは完全禁止ではなく補正として反映済みです。買い方向スコア${buyDirectionScore}点、BB補正後${buyAdjustedScore}点。${buyBbText}。${common}`
         };
       }
 
-      if (sellTrendOk && counterOk && expectedOk && distanceOk && sellSetupOk && sellReversalOk && noEvent && riskOk && bbSellOk) {
+      if (sellTrendOk && counterOk && expectedOk && distanceOk && sellNotLargeBreak && sellSignalOk && noEvent && riskOk) {
         return {
           judge: "🔴 売り入口",
           cls: "result sell",
-          plan: "戻り後の売り",
-          detail: `売り入口候補：ミドルライン付近まで戻して、1分足が再下落しています。売り優勢、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分売り準備、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
+          plan: "売り入口",
+          detail: `売り入口：条件が揃っています。BBは完全禁止ではなく補正として反映済みです。売り方向スコア${sellDirectionScore}点、BB補正後${sellAdjustedScore}点。${sellBbText}。${common}`
         };
       }
 
       if (trend.direction === "buy") {
+        const hot = oneBb.upperNear || distance > 5 || (Number.isFinite(rsi) && rsi >= 70);
         return {
-          judge: "🟡 押し目待ち",
+          judge: hot ? "🟡 押し目待ち" : "🟡 買い準備",
           cls: "result prep",
-          plan: "EMA接近待ち",
-          detail: `高値掴み注意。EMA接近待ちです。BBミドル付近まで押してからの再上昇を待ちます。買い方向ですが、入口条件の一部が未達です。待つ理由：${common}`
+          plan: hot ? "押し目待ち" : "買い準備",
+          detail: `${hot ? "高値掴み警戒。押し目を待ちます。" : "買い入口には少し不足していますが、方向は買いです。"} ${buyBbText}。入口までに必要：${buyMissing.join(" / ") || "ほぼ条件到達"}。あと何が揃えば入口か：不足項目の改善と1分足の買い方向確認です。${common}`
         };
       }
 
       if (trend.direction === "sell") {
+        const hot = oneBb.lowerNear || distance > 5 || (Number.isFinite(rsi) && rsi <= 30);
         return {
-          judge: "🟠 戻り売り待ち",
+          judge: hot ? "🟠 戻り売り待ち" : "🟠 売り準備",
           cls: "result prep",
-          plan: "EMA接近待ち",
-          detail: `安値掴み注意。EMA接近待ちです。BBミドル付近まで戻してからの再下落を待ちます。売り方向ですが、入口条件の一部が未達です。待つ理由：${common}`
+          plan: hot ? "戻り売り待ち" : "売り準備",
+          detail: `${hot ? "安値掴み警戒。戻り売りを待ちます。" : "売り入口には少し不足していますが、方向は売りです。"} ${sellBbText}。入口までに必要：${sellMissing.join(" / ") || "ほぼ条件到達"}。あと何が揃えば入口か：不足項目の改善と1分足の売り方向確認です。${common}`
         };
       }
 
@@ -1002,11 +1054,11 @@
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v4.8順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        reasons.push(`v4.8逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`v4.9順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v4.9逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
         reasons.push(`期待勝率：${expected.rate}%（${expected.label}）。根拠：${expected.notes.join(" / ") || "標準条件"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
-        reasons.push(`v4.8入口判定：${v35.detail}`);
+        reasons.push(`v4.9入口判定：${v35.detail}`);
         badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance, `1分BB:${one.bb?.position || "--"}`, `5分BB:${ha5.bb?.position || "--"}`, `BB幅:${one.bb?.widthState || "--"}`, `飛び乗り警戒:${one.bb?.jumpRisk || ha5.bb?.jumpRisk ? "ON" : "OFF"}`);
 
         let judge = v35.judge; let cls = v35.cls;
@@ -1412,8 +1464,8 @@
 
     function getDotenAdvice(position, judge) {
       if (!position || !judge) return null;
-      const buyExitSignals = ["買い優勢", "強い買い", "押し目待ち", "🟡 押し目待ち"];
-      const sellExitSignals = ["売り優勢", "強い売り", "戻り待ち", "戻り売り待ち", "🟠 戻り売り待ち"];
+      const buyExitSignals = ["買い優勢", "強い買い", "買い準備", "🟡 買い準備", "押し目待ち", "🟡 押し目待ち"];
+      const sellExitSignals = ["売り優勢", "強い売り", "売り準備", "🟠 売り準備", "戻り待ち", "戻り売り待ち", "🟠 戻り売り待ち"];
       if (position.side === "sell") {
         if (judge === "🟢 買い入口" || judge === "買い入口" || judge === "強い買い入口") return { text: "売り決済推奨 / ドテン買い候補：売り保有中に買い入口が確定しています。実際の決済と新規注文は取引画面で行ってください。", cls: "adviceCut" };
         if (buyExitSignals.some(signal => judge === signal || judge.includes(signal))) return { text: "売り撤退検討：売り保有中に買い方向へ傾いています。入口待ち段階では即ドテンせず、まず売り撤退を検討してください。", cls: "adviceTake" };
@@ -1862,5 +1914,6 @@
   </script>
 </body>
 </html>
+
 
 
