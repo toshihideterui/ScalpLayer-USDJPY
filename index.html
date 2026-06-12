@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0057d9" />
-  <meta name="scalplayer-version" content="4.9" />
+  <meta name="scalplayer-version" content="5.0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ScalpLayer" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>ScalpLayer USDJPY v4.9</title>
+  <title>ScalpLayer USDJPY v5.0</title>
   <style>
     :root {
       --bg1: #0057d9; --bg2: #003f75; --bg3: #07111f; --card: #101827; --input: #020617;
@@ -127,13 +127,13 @@
 <body>
   <main class="container">
     <section class="hero">
-      <h1>ScalpLayer USDJPY v4.9</h1>
+      <h1>ScalpLayer USDJPY v5.0</h1>
       <p class="small">15分足は環境認識、5分足は準備、1分足でエントリーを判断するドル円スキャルピング補助ツールです。</p><div class="timeframeTabs"><span class="sectionLabel labelBlue">15分足</span><span class="sectionLabel labelGreen">5分足</span><span class="sectionLabel labelOrange">1分足</span></div>
     </section>
 
     <section class="card notice">※これは検証・練習用の補助ツールです。自動売買や利益保証ではありません。取得価格は遅延・停止・誤差の可能性があります。実取引は必ず取引会社のレートを確認してください。</section>
 
-    <section class="card update">v4.9：ボリンジャーバンド判定を禁止条件から加点/減点方式へ調整しました。買い準備・売り準備を追加し、サインが出なさすぎる問題を改善します。<br><span class="small">更新確認用：v4.9</span></section>
+    <section class="card update">v5.0：サイン正体解析モードを追加しました。買い入口/売り入口が順方向サインなのか、直近上限・下限検出なのかを未来価格で検証します。<br><span class="small">更新確認用：v5.0</span></section>
 
     <section class="card">
       <h2>① APIキー設定</h2>
@@ -148,7 +148,7 @@
       <p class="small">CPI・雇用統計（NFP）・FOMC・ISM製造業景況指数・ADP雇用統計・小売売上高を固定チェックします。重要イベント候補日は終日警戒、それ以外の日は通常取引可能として表示します。</p>
       <div id="eventRiskStatus" class="eventSafe">重要イベント警戒なし</div>
 
-      <div class="eventSafe">v4.9: 経済指標はAPIキー不要の固定チェック方式です。</div>
+      <div class="eventSafe">v5.0: 経済指標はAPIキー不要の固定チェック方式です。</div>
       <p id="calendarStatus" class="small">本日の重要イベントを確認中です。</p>
       <div id="eventList" class="small">本日の重要イベントを表示します。</div>
     </section>
@@ -358,7 +358,7 @@
         <div class="statBox">順張り勝率<strong id="trendWinRate">--</strong></div>
         <div class="statBox">逆張り勝率<strong id="counterWinRate">--</strong></div>
       </div>
-      <h3>v4.9 検証ダッシュボード</h3>
+      <h3>v5.0 検証ダッシュボード</h3>
       <div class="insightGrid">
         <div class="insightBox"><strong id="bestHourView">--</strong><span>勝ちやすい時間帯</span></div>
         <div class="insightBox"><strong id="bestJudgeView">--</strong><span>勝ちやすい判定</span></div>
@@ -370,14 +370,32 @@
       <h3>期待勝率別成績</h3><div id="expectedRateStats" class="small">まだ集計できません。</div>
       <h3>記録ログ</h3><div id="log" class="small">まだ記録はありません。</div>
     </section>
+
+    <section class="card">
+      <h2>⑧ サイン正体解析モード</h2>
+      <p class="small">買い入口・売り入口が、順方向サインなのか、直近上限/下限の検出なのかを未来価格で検証します。売買サインは増やさず、既存サインを記録して追跡します。</p>
+      <div id="signalIdentityLabel" class="adviceBox adviceHold">買い入口・売り入口が出ると、解析ラベルを表示します。</div>
+      <div class="grid">
+        <div class="statBox">解析ログ件数<strong id="identityLogCount">0</strong></div>
+        <div class="statBox">正体判定<strong id="identitySummary">データ不足</strong></div>
+      </div>
+      <h3>通常方向 vs 逆方向</h3>
+      <div id="identityStats" class="small">まだ集計できません。</div>
+      <button class="blue" onclick="downloadIdentityCsv()">実験ログCSVをダウンロード</button>
+      <button class="red" onclick="resetIdentityLogs()">実験ログをリセット</button>
+      <h3>実験ログ</h3>
+      <div id="identityLog" class="small">まだ実験ログはありません。</div>
+    </section>
   </main>
 
   <script>
     const KEY_STORAGE = "scalplayer_twelvedata_key_v1";
     const STAT_STORAGE = "scalplayer_usdjpy_stats_v3_0";
-    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v4_9";
-    const POSITION_STORAGE = "scalplayer_usdjpy_position_v4_9";
-    const EVENT_STORAGE = "scalplayer_usdjpy_events_v4_9";
+    const TRADE_HISTORY_STORAGE = "scalplayer_usdjpy_trade_history_v5_0";
+    const POSITION_STORAGE = "scalplayer_usdjpy_position_v5_0";
+    const EVENT_STORAGE = "scalplayer_usdjpy_events_v5_0";
+    const IDENTITY_LOG_STORAGE = "scalplayer_usdjpy_identity_logs_v5_0";
+    const IDENTITY_INTERVALS = [1, 3, 5, 10, 30];
     let autoTimer = null, autoEnabled = false, soundAlertEnabled = false, audioContext = null;
     let lastAlertJudge = "判定なし";
     let activePosition = null;
@@ -385,13 +403,14 @@
     let lastKnownPrice = null;
     let wins = 0, loses = 0, draws = 0, totalTrades = 0;
     let tradeHistory = [];
+    let identityLogs = [];
     let lastJudgeText = "判定なし";
     let lastSnapshot = { price: "--", env: "--", setup: "--", one: "--", distance: "--", trendScore: null, counterScore: null, expectedRate: null, sessionName: "--", entryMode: "none" };
 
     window.addEventListener("load", () => {
       const savedKey = localStorage.getItem(KEY_STORAGE);
       if (savedKey) { document.getElementById("apiKey").value = savedKey; document.getElementById("keyStatus").textContent = "保存済みのAPIキーを読み込みました。"; }
-      loadStats(); loadTradeHistory(); loadPosition(); syncRiskInputsFromPosition(); loadImportantEvents(); refreshEconomicEvents(); updateStatsView(); updateTradeInsights(); updateAutoButtonView(); updateAlertButtonView(); setupRiskManagementInputs(); renderRiskManagement(); updatePositionPanel(); renderEventPanel(); setInterval(() => { renderRiskManagement(); updatePositionPanel(); renderEventPanel(); }, 30000);
+      loadStats(); loadTradeHistory(); loadIdentityLogs(); loadPosition(); syncRiskInputsFromPosition(); loadImportantEvents(); refreshEconomicEvents(); updateStatsView(); updateTradeInsights(); updateAutoButtonView(); updateAlertButtonView(); setupRiskManagementInputs(); renderRiskManagement(); updatePositionPanel(); renderEventPanel(); setInterval(() => { renderRiskManagement(); updatePositionPanel(); renderEventPanel(); }, 30000);
     });
 
     function saveApiKey() {
@@ -1054,11 +1073,11 @@
         const reasons = []; const badges = [];
         reasons.push(`現在価格は ${env.price.toFixed(3)} です。`);
         reasons.push(...env.reasons); reasons.push(...ha15.reasons); reasons.push(...setup.reasons); reasons.push(...ha5.reasons); reasons.push(...one.reasons);
-        reasons.push(`v4.9順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
-        reasons.push(`v4.9逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
+        reasons.push(`v5.0順張りスコア：${trend.score}点（${trend.text}）です。内訳：${trend.details.join(" / ") || "加点なし"}`);
+        reasons.push(`v5.0逆張りスコア：${counter.score}点（${counter.text}）です。内訳：${counter.details.join(" / ") || "過熱感は弱め"}`);
         reasons.push(`期待勝率：${expected.rate}%（${expected.label}）。根拠：${expected.notes.join(" / ") || "標準条件"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
-        reasons.push(`v4.9入口判定：${v35.detail}`);
+        reasons.push(`v5.0入口判定：${v35.detail}`);
         badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance, `1分BB:${one.bb?.position || "--"}`, `5分BB:${ha5.bb?.position || "--"}`, `BB幅:${one.bb?.widthState || "--"}`, `飛び乗り警戒:${one.bb?.jumpRisk || ha5.bb?.jumpRisk ? "ON" : "OFF"}`);
 
         let judge = v35.judge; let cls = v35.cls;
@@ -1070,6 +1089,7 @@
           reasons.push(`${eventRisk.event.title} の重要イベント警戒日です。新規エントリーは非推奨、保有中なら縮小・撤退を優先してください。`);
         }
 
+        trackIdentitySignal(judge, env.price, trend, counter, expected, one, session, risk);
         lastJudgeText = judge; maybeAlert(judge);
         lastSnapshot = {
           price: env.price.toFixed(3),
@@ -1120,6 +1140,227 @@
       document.getElementById("badges").innerHTML = badges.map(b => `<span class="pill">${escapeHtml(b)}</span>`).join(""); renderReasons(reasons);
     }
     function renderReasons(reasons) { document.getElementById("reasons").innerHTML = reasons.map(r => `<li>${escapeHtml(r)}</li>`).join(""); }
+
+    function isEntrySignal(judge) {
+      return judge === "🟢 買い入口" || judge === "🔴 売り入口" || judge === "買い入口" || judge === "売り入口";
+    }
+
+    function getSignalSide(judge) {
+      return String(judge || "").includes("買い") ? "buy" : String(judge || "").includes("売り") ? "sell" : "none";
+    }
+
+    function getIdentityAnalysisLabel(judge) {
+      const side = getSignalSide(judge);
+      const reverseCandidate = judgeIdentitySummary().includes("逆") ? "ON" : "OFF";
+      if (side === "buy") return { normal: "買い入口", analysis: "直近上限到達の可能性", reverseCandidate };
+      if (side === "sell") return { normal: "売り入口", analysis: "直近下限到達の可能性", reverseCandidate };
+      return { normal: "--", analysis: "入口サイン待ち", reverseCandidate: "OFF" };
+    }
+
+    function updateIdentityLabel(judge) {
+      const el = document.getElementById("signalIdentityLabel");
+      if (!el) return;
+      const label = getIdentityAnalysisLabel(judge);
+      if (!isEntrySignal(judge)) {
+        el.textContent = "買い入口・売り入口が出ると、解析ラベルを表示します。";
+        el.className = "adviceBox adviceHold";
+        return;
+      }
+      el.textContent = `通常ラベル：${label.normal} / 解析ラベル：${label.analysis} / 短期逆張り候補：${label.reverseCandidate}`;
+      el.className = "adviceBox adviceTake";
+    }
+
+    function trackIdentitySignal(judge, price, trend, counter, expected, one, session, risk) {
+      updateIdentityLabel(judge);
+      updatePendingIdentityLogs(price);
+      if (!isEntrySignal(judge) || !Number.isFinite(price)) {
+        renderIdentityPanel();
+        return;
+      }
+      const side = getSignalSide(judge);
+      const now = Date.now();
+      const last = identityLogs[0];
+      if (last && last.signal === side && now - new Date(last.time).getTime() < 60000 && Math.abs(Number(last.entryPrice) - price) < 0.005) {
+        renderIdentityPanel();
+        return;
+      }
+      const riskPercent = Number(risk?.riskPercent);
+      const log = {
+        id: now,
+        time: new Date(now).toISOString(),
+        signal: side,
+        signalText: side === "buy" ? "買い入口" : "売り入口",
+        entryPrice: price,
+        trendScore: Number(trend?.score),
+        counterScore: Number(counter?.score),
+        expectedRate: Number(expected?.rate),
+        emaDistance: Number(one?.distancePips),
+        rsi: Number(one?.rsi14),
+        bbPosition: one?.bb?.position || "--",
+        session: session?.name || "--",
+        riskPercent: Number.isFinite(riskPercent) ? riskPercent : null,
+        results: {}
+      };
+      IDENTITY_INTERVALS.forEach(min => {
+        log.results[`${min}m`] = { targetTime: now + min * 60000, price: null, normalPips: null, reversePips: null };
+      });
+      identityLogs.unshift(log);
+      identityLogs = identityLogs.slice(0, 300);
+      saveIdentityLogs();
+      renderIdentityPanel();
+    }
+
+    function updatePendingIdentityLogs(currentPrice) {
+      if (!Number.isFinite(currentPrice) || !identityLogs.length) return;
+      let changed = false;
+      const now = Date.now();
+      identityLogs.forEach(log => {
+        IDENTITY_INTERVALS.forEach(min => {
+          const key = `${min}m`;
+          const row = log.results?.[key];
+          if (!row || row.price !== null || now < row.targetTime) return;
+          const normal = log.signal === "buy" ? (currentPrice - log.entryPrice) * 100 : (log.entryPrice - currentPrice) * 100;
+          row.price = currentPrice;
+          row.normalPips = Number(normal.toFixed(1));
+          row.reversePips = Number((-normal).toFixed(1));
+          changed = true;
+        });
+      });
+      if (changed) saveIdentityLogs();
+    }
+
+    function saveIdentityLogs() {
+      localStorage.setItem(IDENTITY_LOG_STORAGE, JSON.stringify(identityLogs));
+    }
+
+    function loadIdentityLogs() {
+      try {
+        const raw = localStorage.getItem(IDENTITY_LOG_STORAGE);
+        identityLogs = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(identityLogs)) identityLogs = [];
+      } catch(e) { identityLogs = []; }
+      identityLogs = identityLogs.slice(0, 300);
+      renderIdentityPanel();
+    }
+
+    function formatIdentityPips(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? `${n >= 0 ? "+" : ""}${n.toFixed(1)}pips` : "--";
+    }
+
+    function aggregateIdentityByInterval() {
+      return IDENTITY_INTERVALS.map(min => {
+        const key = `${min}m`;
+        const rows = identityLogs.filter(log => Number.isFinite(Number(log.results?.[key]?.normalPips)));
+        const buyRows = rows.filter(log => log.signal === "buy");
+        const sellRows = rows.filter(log => log.signal === "sell");
+        const normalWins = rows.filter(log => Number(log.results[key].normalPips) > 0).length;
+        const reverseWins = rows.filter(log => Number(log.results[key].reversePips) > 0).length;
+        const normalTotal = rows.reduce((sum, log) => sum + Number(log.results[key].normalPips), 0);
+        const reverseTotal = rows.reduce((sum, log) => sum + Number(log.results[key].reversePips), 0);
+        const normalAvg = rows.length ? normalTotal / rows.length : null;
+        const reverseAvg = rows.length ? reverseTotal / rows.length : null;
+        const buyNormalRate = calcIdentityRate(buyRows, key, "normalPips");
+        const buyReverseRate = calcIdentityRate(buyRows, key, "reversePips");
+        const sellNormalRate = calcIdentityRate(sellRows, key, "normalPips");
+        const sellReverseRate = calcIdentityRate(sellRows, key, "reversePips");
+        return {
+          min, key, count: rows.length,
+          normalRate: rows.length ? normalWins / rows.length * 100 : null,
+          reverseRate: rows.length ? reverseWins / rows.length * 100 : null,
+          normalAvg, reverseAvg, normalTotal, reverseTotal,
+          buyNormalRate, buyReverseRate, sellNormalRate, sellReverseRate
+        };
+      });
+    }
+
+    function calcIdentityRate(rows, key, pipsKey) {
+      const done = rows.filter(log => Number.isFinite(Number(log.results?.[key]?.[pipsKey])));
+      if (!done.length) return null;
+      const wins = done.filter(log => Number(log.results[key][pipsKey]) > 0).length;
+      return wins / done.length * 100;
+    }
+
+    function formatRate(value) {
+      return Number.isFinite(Number(value)) ? `${Math.round(Number(value))}%` : "--";
+    }
+
+    function judgeIdentitySummary() {
+      const rows = aggregateIdentityByInterval();
+      const shortRows = rows.filter(r => [1,3,5].includes(r.min) && r.count >= 3);
+      const midRows = rows.filter(r => [10,30].includes(r.min) && r.count >= 3);
+      if (!shortRows.length && !midRows.length) return "データ不足";
+      const shortReverseGood = shortRows.length && shortRows.every(r => Number(r.reverseRate) >= 55);
+      const midNormalGood = midRows.length && midRows.every(r => Number(r.normalRate) >= 55);
+      const normalGood = rows.some(r => r.count >= 3 && Number(r.normalRate) >= 55);
+      const reverseGood = rows.some(r => r.count >= 3 && Number(r.reverseRate) >= 55);
+      const noisy = rows.some(r => r.count >= 3 && Math.abs(Number(r.normalRate) - 50) <= 5 && Math.abs(Number(r.reverseRate) - 50) <= 5);
+      if (shortReverseGood && midNormalGood) return "短期は逆方向が有利 / 10分後・30分後は順方向が有利";
+      if (shortReverseGood) return "短期逆張り有利。このサインは上限/下限検出として使える可能性あり";
+      if (midNormalGood) return "中期順張り有利。30分後は順方向が有利";
+      if (normalGood && !reverseGood) return "通常方向が優位";
+      if (reverseGood && !normalGood) return "逆張り方向が優位。このサインはスキャルピング向きではない可能性";
+      if (noisy) return "ノイズ/レンジ判定";
+      return "データ不足";
+    }
+
+    function renderIdentityPanel() {
+      const count = document.getElementById("identityLogCount");
+      const summary = document.getElementById("identitySummary");
+      const stats = document.getElementById("identityStats");
+      const logEl = document.getElementById("identityLog");
+      if (count) count.textContent = identityLogs.length;
+      if (summary) summary.textContent = judgeIdentitySummary();
+      if (stats) {
+        const rows = aggregateIdentityByInterval();
+        stats.innerHTML = `<table class="miniTable"><thead><tr><th>時間</th><th>買い→買い</th><th>買い→売り</th><th>売り→売り</th><th>売り→買い</th><th>通常平均</th><th>逆平均</th><th>通常合計</th><th>逆合計</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.min}分後<br><span class="small">n=${r.count}</span></td><td>${formatRate(r.buyNormalRate)}</td><td>${formatRate(r.buyReverseRate)}</td><td>${formatRate(r.sellNormalRate)}</td><td>${formatRate(r.sellReverseRate)}</td><td>${formatIdentityPips(r.normalAvg)}</td><td>${formatIdentityPips(r.reverseAvg)}</td><td>${formatIdentityPips(r.normalTotal)}</td><td>${formatIdentityPips(r.reverseTotal)}</td></tr>`).join("")}</tbody></table>`;
+      }
+      if (logEl) {
+        if (!identityLogs.length) { logEl.textContent = "まだ実験ログはありません。"; return; }
+        logEl.innerHTML = identityLogs.slice(0, 50).map(log => {
+          const items = IDENTITY_INTERVALS.map(min => {
+            const row = log.results?.[`${min}m`];
+            const winner = row && Number.isFinite(Number(row.normalPips)) ? Number(row.normalPips) >= Number(row.reversePips) ? "通常" : "逆" : "未確定";
+            return `${min}分:${formatIdentityPips(row?.normalPips)}/${formatIdentityPips(row?.reversePips)} ${winner}`;
+          }).join(" / ");
+          return `<div class="logItem">${escapeHtml(new Date(log.time).toLocaleString())}｜${escapeHtml(log.signalText)}｜${Number(log.entryPrice).toFixed(3)}｜${escapeHtml(items)}</div>`;
+        }).join("");
+      }
+    }
+
+    function resetIdentityLogs() {
+      if (!confirm("サイン正体解析ログをリセットしますか？")) return;
+      identityLogs = [];
+      localStorage.removeItem(IDENTITY_LOG_STORAGE);
+      renderIdentityPanel();
+    }
+
+    function downloadIdentityCsv() {
+      const header = ["time","signal","entryPrice","trendScore","counterScore","expectedRate","emaDistance","rsi","bbPosition","session","riskPercent","pips1mNormal","pips1mReverse","pips3mNormal","pips3mReverse","pips5mNormal","pips5mReverse","pips10mNormal","pips10mReverse","pips30mNormal","pips30mReverse"];
+      const rows = identityLogs.map(log => {
+        const base = [log.time, log.signal, log.entryPrice, log.trendScore, log.counterScore, log.expectedRate, log.emaDistance, log.rsi, log.bbPosition, log.session, log.riskPercent];
+        const vals = IDENTITY_INTERVALS.flatMap(min => {
+          const row = log.results?.[`${min}m`] || {};
+          return [row.normalPips ?? "", row.reversePips ?? ""];
+        });
+        return [...base, ...vals].map(csvEscape).join(",");
+      });
+      const csv = [header.join(","), ...rows].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "scalplayer_identity_logs_v5_0.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function csvEscape(value) {
+      const text = value === null || value === undefined ? "" : String(value);
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
 
     function updateAutoButtonView() { const btn = document.getElementById("autoBtn"); if (autoEnabled) { btn.textContent = "1分ごと自動分析 ON"; btn.className = "green"; } else { btn.textContent = "1分ごと自動分析 OFF"; btn.className = "red"; } }
     function updateAlertButtonView() { const btn = document.getElementById("alertBtn"); const status = document.getElementById("alertStatus"); if (soundAlertEnabled) { btn.textContent = "音アラート ON"; btn.className = "green"; status.textContent = "音アラート：ON。新しい買い入口・売り入口サインが出た時に音で知らせます。"; } else { btn.textContent = "音アラート OFF"; btn.className = "red"; status.textContent = "音アラート：OFF。買い・売りサインが出た時に音で知らせたい場合はONにしてください。"; } }
@@ -1914,6 +2155,7 @@
   </script>
 </body>
 </html>
+
 
 
 
