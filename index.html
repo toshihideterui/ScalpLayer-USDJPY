@@ -592,6 +592,48 @@
       return base;
     }
 
+    function calculateBollingerBand(series, index = 1, period = 20, multiplier = 2) {
+      const rows = series.slice(index, index + period);
+      const prevRows = series.slice(index + 1, index + 1 + period);
+      if (rows.length < period || !rows.every(v => Number.isFinite(v.close))) return { valid: false, position: "計算不可", widthState: "--", jumpRisk: false, reason: "BB計算に必要な20本分のデータが不足しています。" };
+      const closes = rows.map(v => v.close);
+      const middle = closes.reduce((sum, v) => sum + v, 0) / period;
+      const variance = closes.reduce((sum, v) => sum + Math.pow(v - middle, 2), 0) / period;
+      const sigma = Math.sqrt(variance);
+      const upper = middle + sigma * multiplier;
+      const lower = middle - sigma * multiplier;
+      const price = series[index].close;
+      const width = upper - lower;
+      const near = Math.max(width * 0.15, 0.01);
+      let position = "中間";
+      if (price >= upper - near) position = "上バンド付近";
+      else if (price <= lower + near) position = "下バンド付近";
+      else if (Math.abs(price - middle) <= near) position = "ミドル付近";
+
+      let widthState = "--";
+      if (prevRows.length >= period && prevRows.every(v => Number.isFinite(v.close))) {
+        const prevCloses = prevRows.map(v => v.close);
+        const prevMiddle = prevCloses.reduce((sum, v) => sum + v, 0) / period;
+        const prevSigma = Math.sqrt(prevCloses.reduce((sum, v) => sum + Math.pow(v - prevMiddle, 2), 0) / period);
+        const prevWidth = prevSigma * multiplier * 2;
+        widthState = width >= prevWidth ? "拡大中" : "収縮中";
+      }
+
+      return {
+        valid: true,
+        price,
+        middle,
+        upper,
+        lower,
+        width,
+        widthPips: width * 100,
+        position,
+        widthState,
+        jumpRisk: position === "上バンド付近" || position === "下バンド付近",
+        reason: `BB位置:${position} / BB幅:${widthState} / 飛び乗り警戒:${position === "上バンド付近" || position === "下バンド付近" ? "ON" : "OFF"}`
+      };
+    }
+
     function analyzeHeikinAshi15(series15) {
       const ha = calculateHeikinAshi(series15);
       const latest = ha[0], prev = ha[1];
@@ -632,6 +674,8 @@
       const direction = getHeikinAshiDirection(latest);
       const prevDirection = getHeikinAshiDirection(prev);
       const reasons = ["5分足の平均足も未確定足を使わず、1本前の確定足で見ています。"];
+      const bb = calculateBollingerBand(series5, 1);
+      reasons.push(`5分足ボリンジャーバンド：${bb.reason}`);
       let signal = "none";
       let text = "反転なし";
       let strength = 0;
@@ -672,7 +716,7 @@
       const noWickCount = countNoWickStreak(ha.slice(1), direction);
       if (direction === "bull" || direction === "bear") text = formatHaText(direction, streak.count, noWickCount);
 
-      return { signal, text, strength, latest, streak, noWickCount, reasons };
+      return { signal, text, strength, latest, streak, noWickCount, bb, reasons };
     }
 
     function analyzeEnvironment(series15) {
@@ -706,7 +750,9 @@
       const ema9 = calculateEMA(series1, 9);
       const rsi14 = calculateRSI(series1, 14);
       const reasons = ["1分足は未確定足を使わず、1本前の確定足でエントリーを見ています。"];
-      if (!c || !p || !p2 || ema9 === null) return { signal: "none", text: "不足", ema9, rsi14, distance: "--", distancePips: 0, level: "none", reversal: "none", haDirection: "none", haStreak: { direction: "none", count: 0 }, reasons: ["1分足データが不足しています。"] };
+      const bb = calculateBollingerBand(series1, 1);
+      if (!c || !p || !p2 || ema9 === null) return { signal: "none", text: "不足", ema9, rsi14, distance: "--", distancePips: 0, level: "none", reversal: "none", haDirection: "none", haStreak: { direction: "none", count: 0 }, bb, reasons: ["1分足データが不足しています。"] };
+      reasons.push(`1分足ボリンジャーバンド：${bb.reason}`);
       const oneHa = calculateHeikinAshi(series1).slice(1);
       const oneDirection = getHeikinAshiDirection(oneHa[0]);
       const oneStreak = countHeikinAshiStreak(oneHa);
@@ -729,9 +775,9 @@
       reasons.push(`1分足9EMAとの距離は約${distancePips.toFixed(1)}pipsです。`);
       if (rsi14 !== null) reasons.push(`1分足RSI(14)は ${rsi14.toFixed(1)} です。`);
 
-      if (buy >= 2 && buy > sell) return { signal: "buy", text: "買い方向", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, reasons };
-      if (sell >= 2 && sell > buy) return { signal: "sell", text: "売り方向", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, reasons };
-      reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, reasons };
+      if (buy >= 2 && buy > sell) return { signal: "buy", text: "買い方向", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, bb, reasons };
+      if (sell >= 2 && sell > buy) return { signal: "sell", text: "売り方向", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, bb, reasons };
+      reasons.push("1分足の入口サインはまだ揃っていません。"); return { signal: "none", text: "入口なし", ema9, rsi14, distance, distancePips, level, reversal, haDirection: oneDirection, haStreak: oneStreak, bb, reasons };
     }
 
     function calculateHaTrendScore(env, setup, one, ha15, ha5) {
@@ -835,7 +881,14 @@
       const haStreakCount = Number(one.haStreak?.count || 0);
       const riskPercent = Number(risk?.riskPercent);
       const riskText = Number.isFinite(riskPercent) ? `${riskPercent.toFixed(1)}%` : "--";
-      const common = `EMA距離:${distance.toFixed(1)}pips / RSI:${rsiText} / 1分平均足:${haDirection}${haStreakCount}本 / 逆張りスコア:${counter.score}点 / 資金管理リスク:${riskText}`;
+      const oneBb = one.bb || { position: "計算不可", widthState: "--", jumpRisk: false };
+      const fiveBb = ha5.bb || { position: "計算不可", widthState: "--", jumpRisk: false };
+      const bbJumpBuy = oneBb.position === "上バンド付近" || fiveBb.position === "上バンド付近";
+      const bbJumpSell = oneBb.position === "下バンド付近" || fiveBb.position === "下バンド付近";
+      const bbBuyOk = oneBb.position === "ミドル付近" && !bbJumpBuy;
+      const bbSellOk = oneBb.position === "ミドル付近" && !bbJumpSell;
+      const bbWarning = bbJumpBuy || bbJumpSell;
+      const common = `EMA距離:${distance.toFixed(1)}pips / RSI:${rsiText} / 1分平均足:${haDirection}${haStreakCount}本 / 逆張りスコア:${counter.score}点 / 資金管理リスク:${riskText} / 1分BB位置:${oneBb.position} / 5分BB位置:${fiveBb.position} / BB幅:${oneBb.widthState} / 飛び乗り警戒:${bbWarning ? "ON" : "OFF"}`;
 
       const riskOk = Number.isFinite(riskPercent) && riskPercent < 10;
       const noEvent = !eventRisk.active;
@@ -849,33 +902,34 @@
       const counterOk = counter.score <= 2;
       const expectedOk = expected.rate >= 65;
 
-      const buyOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi >= 70) || (one.haDirection === "bull" && haStreakCount >= 5) || counter.score >= 4 || !riskOk;
-      const sellOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi <= 30) || (one.haDirection === "bear" && haStreakCount >= 5) || counter.score >= 4 || !riskOk;
+      const buyOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi >= 70) || (one.haDirection === "bull" && haStreakCount >= 5) || counter.score >= 4 || !riskOk || bbJumpBuy;
+      const sellOverheat = distance >= 5 || (Number.isFinite(rsi) && rsi <= 30) || (one.haDirection === "bear" && haStreakCount >= 5) || counter.score >= 4 || !riskOk || bbJumpSell;
 
       if ((trend.direction === "buy" && buyOverheat) || (trend.direction === "sell" && sellOverheat)) {
+        const bbReason = bbJumpBuy ? "価格が上バンド付近です。買いは飛び乗り禁止 / 押し目待ちです。" : bbJumpSell ? "価格が下バンド付近です。売りは飛び乗り禁止 / 戻り売り待ちです。" : "過熱条件があります。";
         return {
           judge: "🚫 飛び乗り禁止",
           cls: "result wait",
           plan: "押し目/戻り待ち",
-          detail: `押し目/戻りを待ってください。今は高値掴み・安値掴みになりやすい状態です。${common}`
+          detail: `${bbReason} 押し目/戻りを待ってください。今は高値掴み・安値掴みになりやすい状態です。${common}`
         };
       }
 
-      if (buyTrendOk && counterOk && expectedOk && distanceOk && buySetupOk && buyReversalOk && noEvent && riskOk) {
+      if (buyTrendOk && counterOk && expectedOk && distanceOk && buySetupOk && buyReversalOk && noEvent && riskOk && bbBuyOk) {
         return {
           judge: "🟢 買い入口",
           cls: "result buy",
           plan: "押し目後の買い",
-          detail: `エントリー可能：順張り5点以上、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分買い準備、1分再反転、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
+          detail: `買い入口候補：ミドルライン付近まで押して、1分足が再上昇しています。順張り5点以上、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分買い準備、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
         };
       }
 
-      if (sellTrendOk && counterOk && expectedOk && distanceOk && sellSetupOk && sellReversalOk && noEvent && riskOk) {
+      if (sellTrendOk && counterOk && expectedOk && distanceOk && sellSetupOk && sellReversalOk && noEvent && riskOk && bbSellOk) {
         return {
           judge: "🔴 売り入口",
           cls: "result sell",
           plan: "戻り後の売り",
-          detail: `エントリー可能：売り優勢、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分売り準備、1分再反転、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
+          detail: `売り入口候補：ミドルライン付近まで戻して、1分足が再下落しています。売り優勢、逆張り2点以下、期待勝率65%以上、EMA3pips以内、5分売り準備、イベント警戒なし、資金リスク10%未満が揃っています。${common}`
         };
       }
 
@@ -884,7 +938,7 @@
           judge: "🟡 押し目待ち",
           cls: "result prep",
           plan: "EMA接近待ち",
-          detail: `高値掴み注意。EMA接近待ちです。買い方向ですが、入口条件の一部が未達です。待つ理由：${common}`
+          detail: `高値掴み注意。EMA接近待ちです。BBミドル付近まで押してからの再上昇を待ちます。買い方向ですが、入口条件の一部が未達です。待つ理由：${common}`
         };
       }
 
@@ -893,7 +947,7 @@
           judge: "🟠 戻り売り待ち",
           cls: "result prep",
           plan: "EMA接近待ち",
-          detail: `安値掴み注意。EMA接近待ちです。売り方向ですが、入口条件の一部が未達です。待つ理由：${common}`
+          detail: `安値掴み注意。EMA接近待ちです。BBミドル付近まで戻してからの再下落を待ちます。売り方向ですが、入口条件の一部が未達です。待つ理由：${common}`
         };
       }
 
@@ -932,7 +986,7 @@
     async function runAnalysis() {
       const status = document.getElementById("status"); status.textContent = "取得・分析中...";
       try {
-        const [series15, series5, series1] = await Promise.all([fetchSeries("15min", 35), fetchSeries("5min", 12), fetchSeries("1min", 30)]);
+        const [series15, series5, series1] = await Promise.all([fetchSeries("15min", 35), fetchSeries("5min", 30), fetchSeries("1min", 30)]);
         const env = analyzeEnvironment(series15); const ha15 = analyzeHeikinAshi15(series15); const setup = analyzeSetup(series5); const ha5 = analyzeHeikinAshi5(series5); const one = analyzeOneMinute(series1);
         const livePrice = series1[0] && Number.isFinite(series1[0].close) ? series1[0].close : env.price;
         env.price = livePrice;
@@ -953,7 +1007,7 @@
         reasons.push(`期待勝率：${expected.rate}%（${expected.label}）。根拠：${expected.notes.join(" / ") || "標準条件"}`);
         reasons.push(`時間帯：${session.name}（${session.score}）。${session.detail}`);
         reasons.push(`v4.8入口判定：${v35.detail}`);
-        badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance);
+        badges.push(trend.text, `順張り：${trend.score}`, counter.text, `逆張り：${counter.score}`, env.text, "15分平均足：" + ha15.text, setup.text, "5分平均足：" + ha5.text, one.text, one.distance, `1分BB:${one.bb?.position || "--"}`, `5分BB:${ha5.bb?.position || "--"}`, `BB幅:${one.bb?.widthState || "--"}`, `飛び乗り警戒:${one.bb?.jumpRisk || ha5.bb?.jumpRisk ? "ON" : "OFF"}`);
 
         let judge = v35.judge; let cls = v35.cls;
 
@@ -969,8 +1023,8 @@
           price: env.price.toFixed(3),
           env: env.text + " / 平均足:" + ha15.text + " / 順張り:" + trend.text + " / 逆張り:" + counter.text,
           setup: setup.text + " / 平均足:" + ha5.text,
-          one: one.text,
-          distance: one.distance,
+          one: one.text + " / BB:" + (one.bb?.position || "--"),
+          distance: one.distance + " / BB幅:" + (one.bb?.widthState || "--"),
           trendScore: trend.score,
           counterScore: counter.score,
           expectedRate: expected.rate,
