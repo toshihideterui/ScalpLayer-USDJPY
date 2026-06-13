@@ -373,7 +373,7 @@
 
     <section class="card">
       <h2>⑧ サイン正体解析モード</h2>
-      <p class="small">買い入口・売り入口が、順方向サインなのか、直近上限/下限の検出なのかを未来価格で検証します。売買サインは増やさず、既存サインを記録して追跡します。</p>
+      <p class="small">買い入口・売り入口が、順方向サインなのか、直近上限/下限の検出なのかを未来価格と最大順行/最大逆行で検証します。売買サインは増やさず、既存サインを記録して追跡します。</p>
       <div id="signalIdentityLabel" class="adviceBox adviceHold">買い入口・売り入口が出ると、解析ラベルを表示します。</div>
       <div class="grid">
         <div class="statBox">解析ログ件数<strong id="identityLogCount">0</strong></div>
@@ -1202,7 +1202,7 @@
         results: {}
       };
       IDENTITY_INTERVALS.forEach(min => {
-        log.results[`${min}m`] = { targetTime: now + min * 60000, price: null, normalPips: null, reversePips: null };
+        log.results[`${min}m`] = { targetTime: now + min * 60000, price: null, normalPips: null, reversePips: null, maxNormalPips: 0, maxReversePips: 0 };
       });
       identityLogs.unshift(log);
       identityLogs = identityLogs.slice(0, 300);
@@ -1215,14 +1215,19 @@
       let changed = false;
       const now = Date.now();
       identityLogs.forEach(log => {
+        const normal = log.signal === "buy" ? (currentPrice - log.entryPrice) * 100 : (log.entryPrice - currentPrice) * 100;
+        const normalFixed = Number(normal.toFixed(1));
+        const reverseFixed = Number((-normal).toFixed(1));
         IDENTITY_INTERVALS.forEach(min => {
           const key = `${min}m`;
           const row = log.results?.[key];
-          if (!row || row.price !== null || now < row.targetTime) return;
-          const normal = log.signal === "buy" ? (currentPrice - log.entryPrice) * 100 : (log.entryPrice - currentPrice) * 100;
+          if (!row || row.price !== null) return;
+          row.maxNormalPips = Math.max(Number(row.maxNormalPips || 0), normalFixed);
+          row.maxReversePips = Math.max(Number(row.maxReversePips || 0), reverseFixed);
+          if (now < row.targetTime) { changed = true; return; }
           row.price = currentPrice;
-          row.normalPips = Number(normal.toFixed(1));
-          row.reversePips = Number((-normal).toFixed(1));
+          row.normalPips = normalFixed;
+          row.reversePips = reverseFixed;
           changed = true;
         });
       });
@@ -1239,6 +1244,17 @@
         identityLogs = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(identityLogs)) identityLogs = [];
       } catch(e) { identityLogs = []; }
+      identityLogs = identityLogs.map(log => {
+        if (!log.results) log.results = {};
+        IDENTITY_INTERVALS.forEach(min => {
+          const key = `${min}m`;
+          if (!log.results[key]) log.results[key] = { targetTime: new Date(log.time).getTime() + min * 60000, price: null, normalPips: null, reversePips: null, maxNormalPips: 0, maxReversePips: 0 };
+          const row = log.results[key];
+          row.maxNormalPips = Number.isFinite(Number(row.maxNormalPips)) ? Number(row.maxNormalPips) : Math.max(0, Number(row.normalPips || 0));
+          row.maxReversePips = Number.isFinite(Number(row.maxReversePips)) ? Number(row.maxReversePips) : Math.max(0, Number(row.reversePips || 0));
+        });
+        return log;
+      });
       identityLogs = identityLogs.slice(0, 300);
       renderIdentityPanel();
     }
@@ -1258,8 +1274,12 @@
         const reverseWins = rows.filter(log => Number(log.results[key].reversePips) > 0).length;
         const normalTotal = rows.reduce((sum, log) => sum + Number(log.results[key].normalPips), 0);
         const reverseTotal = rows.reduce((sum, log) => sum + Number(log.results[key].reversePips), 0);
+        const maxNormalTotal = rows.reduce((sum, log) => sum + Number(log.results[key].maxNormalPips || 0), 0);
+        const maxReverseTotal = rows.reduce((sum, log) => sum + Number(log.results[key].maxReversePips || 0), 0);
         const normalAvg = rows.length ? normalTotal / rows.length : null;
         const reverseAvg = rows.length ? reverseTotal / rows.length : null;
+        const maxNormalAvg = rows.length ? maxNormalTotal / rows.length : null;
+        const maxReverseAvg = rows.length ? maxReverseTotal / rows.length : null;
         const buyNormalRate = calcIdentityRate(buyRows, key, "normalPips");
         const buyReverseRate = calcIdentityRate(buyRows, key, "reversePips");
         const sellNormalRate = calcIdentityRate(sellRows, key, "normalPips");
@@ -1268,7 +1288,7 @@
           min, key, count: rows.length,
           normalRate: rows.length ? normalWins / rows.length * 100 : null,
           reverseRate: rows.length ? reverseWins / rows.length * 100 : null,
-          normalAvg, reverseAvg, normalTotal, reverseTotal,
+          normalAvg, reverseAvg, normalTotal, reverseTotal, maxNormalAvg, maxReverseAvg, maxNormalTotal, maxReverseTotal,
           buyNormalRate, buyReverseRate, sellNormalRate, sellReverseRate
         };
       });
@@ -1295,6 +1315,10 @@
       const normalGood = rows.some(r => r.count >= 3 && Number(r.normalRate) >= 55);
       const reverseGood = rows.some(r => r.count >= 3 && Number(r.reverseRate) >= 55);
       const noisy = rows.some(r => r.count >= 3 && Math.abs(Number(r.normalRate) - 50) <= 5 && Math.abs(Number(r.reverseRate) - 50) <= 5);
+      const ceilingBottomLike = shortRows.length && shortRows.every(r => Number(r.maxReverseAvg) > Number(r.maxNormalAvg) + 0.5);
+      const delayedLike = shortRows.length && shortRows.every(r => Number(r.maxNormalAvg) > 0.8 && Number(r.normalAvg) < Number(r.maxNormalAvg) * 0.35);
+      if (ceilingBottomLike) return "天井/底検出の可能性あり。短期の最大逆行が最大順行を上回っています";
+      if (delayedLike) return "サインが遅れている可能性あり。順行後に失速しやすい傾向です";
       if (shortReverseGood && midNormalGood) return "短期は逆方向が有利 / 10分後・30分後は順方向が有利";
       if (shortReverseGood) return "短期逆張り有利。このサインは上限/下限検出として使える可能性あり";
       if (midNormalGood) return "中期順張り有利。30分後は順方向が有利";
@@ -1313,7 +1337,7 @@
       if (summary) summary.textContent = judgeIdentitySummary();
       if (stats) {
         const rows = aggregateIdentityByInterval();
-        stats.innerHTML = `<table class="miniTable"><thead><tr><th>時間</th><th>買い→買い</th><th>買い→売り</th><th>売り→売り</th><th>売り→買い</th><th>通常平均</th><th>逆平均</th><th>通常合計</th><th>逆合計</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.min}分後<br><span class="small">n=${r.count}</span></td><td>${formatRate(r.buyNormalRate)}</td><td>${formatRate(r.buyReverseRate)}</td><td>${formatRate(r.sellNormalRate)}</td><td>${formatRate(r.sellReverseRate)}</td><td>${formatIdentityPips(r.normalAvg)}</td><td>${formatIdentityPips(r.reverseAvg)}</td><td>${formatIdentityPips(r.normalTotal)}</td><td>${formatIdentityPips(r.reverseTotal)}</td></tr>`).join("")}</tbody></table>`;
+        stats.innerHTML = `<table class="miniTable"><thead><tr><th>時間</th><th>買い→買い</th><th>買い→売り</th><th>売り→売り</th><th>売り→買い</th><th>通常平均</th><th>逆平均</th><th>最大順行</th><th>最大逆行</th><th>通常合計</th><th>逆合計</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.min}分後<br><span class="small">n=${r.count}</span></td><td>${formatRate(r.buyNormalRate)}</td><td>${formatRate(r.buyReverseRate)}</td><td>${formatRate(r.sellNormalRate)}</td><td>${formatRate(r.sellReverseRate)}</td><td>${formatIdentityPips(r.normalAvg)}</td><td>${formatIdentityPips(r.reverseAvg)}</td><td>${formatIdentityPips(r.maxNormalAvg)}</td><td>${formatIdentityPips(r.maxReverseAvg)}</td><td>${formatIdentityPips(r.normalTotal)}</td><td>${formatIdentityPips(r.reverseTotal)}</td></tr>`).join("")}</tbody></table>`;
       }
       if (logEl) {
         if (!identityLogs.length) { logEl.textContent = "まだ実験ログはありません。"; return; }
@@ -1321,7 +1345,7 @@
           const items = IDENTITY_INTERVALS.map(min => {
             const row = log.results?.[`${min}m`];
             const winner = row && Number.isFinite(Number(row.normalPips)) ? Number(row.normalPips) >= Number(row.reversePips) ? "通常" : "逆" : "未確定";
-            return `${min}分:${formatIdentityPips(row?.normalPips)}/${formatIdentityPips(row?.reversePips)} ${winner}`;
+            return `${min}分:${formatIdentityPips(row?.normalPips)}/${formatIdentityPips(row?.reversePips)} 最大順:${formatIdentityPips(row?.maxNormalPips)} 最大逆:${formatIdentityPips(row?.maxReversePips)} ${winner}`;
           }).join(" / ");
           return `<div class="logItem">${escapeHtml(new Date(log.time).toLocaleString())}｜${escapeHtml(log.signalText)}｜${Number(log.entryPrice).toFixed(3)}｜${escapeHtml(items)}</div>`;
         }).join("");
@@ -1336,12 +1360,12 @@
     }
 
     function downloadIdentityCsv() {
-      const header = ["time","signal","entryPrice","trendScore","counterScore","expectedRate","emaDistance","rsi","bbPosition","session","riskPercent","pips1mNormal","pips1mReverse","pips3mNormal","pips3mReverse","pips5mNormal","pips5mReverse","pips10mNormal","pips10mReverse","pips30mNormal","pips30mReverse"];
+      const header = ["time","signal","entryPrice","trendScore","counterScore","expectedRate","emaDistance","rsi","bbPosition","session","riskPercent","pips1mNormal","pips1mReverse","max1mNormal","max1mReverse","pips3mNormal","pips3mReverse","max3mNormal","max3mReverse","pips5mNormal","pips5mReverse","max5mNormal","max5mReverse","pips10mNormal","pips10mReverse","max10mNormal","max10mReverse","pips30mNormal","pips30mReverse","max30mNormal","max30mReverse"];
       const rows = identityLogs.map(log => {
         const base = [log.time, log.signal, log.entryPrice, log.trendScore, log.counterScore, log.expectedRate, log.emaDistance, log.rsi, log.bbPosition, log.session, log.riskPercent];
         const vals = IDENTITY_INTERVALS.flatMap(min => {
           const row = log.results?.[`${min}m`] || {};
-          return [row.normalPips ?? "", row.reversePips ?? ""];
+          return [row.normalPips ?? "", row.reversePips ?? "", row.maxNormalPips ?? "", row.maxReversePips ?? ""];
         });
         return [...base, ...vals].map(csvEscape).join(",");
       });
