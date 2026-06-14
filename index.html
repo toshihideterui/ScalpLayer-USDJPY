@@ -386,6 +386,18 @@
       <h3>実験ログ</h3>
       <div id="identityLog" class="small">まだ実験ログはありません。</div>
     </section>
+
+    <section class="card">
+      <h2>⑨ Research CSV検証</h2>
+      <p class="small">USDJPY_M1_20260515_20260614.csv を読み込み、ScalpLayer v5.0の実際の買い入口・売り入口ロジックで通常方向と逆方向を比較します。</p>
+      <input id="researchCsvInput" type="file" accept=".csv,text/csv" />
+      <button class="blue" onclick="runResearchCsvBacktest()">CSVを読み込んで比較</button>
+      <p id="researchCsvStatus" class="small">CSVを選択してください。</p>
+      <div id="researchCsvSummary" class="adviceBox adviceHold">まだ検証していません。</div>
+      <div id="researchCsvStats" class="small">検証結果をここに表示します。</div>
+      <h3>検出サインログ</h3>
+      <div id="researchCsvLog" class="small">まだサインはありません。</div>
+    </section>
   </main>
 
   <script>
@@ -1384,6 +1396,215 @@
     function csvEscape(value) {
       const text = value === null || value === undefined ? "" : String(value);
       return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function parseResearchCsv(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",");
+        if (cols.length < 6) continue;
+        const timeText = cols[0].trim();
+        const time = new Date(timeText.replace(" ", "T"));
+        const row = {
+          time: timeText,
+          timeMs: time.getTime(),
+          open: Number(cols[1]),
+          high: Number(cols[2]),
+          low: Number(cols[3]),
+          close: Number(cols[4]),
+          tick_volume: Number(cols[5])
+        };
+        if (Number.isFinite(row.timeMs) && [row.open,row.high,row.low,row.close].every(Number.isFinite)) rows.push(row);
+      }
+      return rows.sort((a,b) => a.timeMs - b.timeMs);
+    }
+
+    function floorToPeriod(timeMs, minutes) {
+      const step = minutes * 60000;
+      return Math.floor(timeMs / step) * step;
+    }
+
+    function buildResearchPeriodBars(m1Rows, minutes) {
+      const map = new Map();
+      m1Rows.forEach(row => {
+        const bucket = floorToPeriod(row.timeMs, minutes);
+        let bar = map.get(bucket);
+        if (!bar) {
+          bar = { time: new Date(bucket).toISOString().slice(0,16).replace("T", " "), timeMs: bucket, open: row.open, high: row.high, low: row.low, close: row.close, tick_volume: row.tick_volume || 0 };
+          map.set(bucket, bar);
+        } else {
+          bar.high = Math.max(bar.high, row.high);
+          bar.low = Math.min(bar.low, row.low);
+          bar.close = row.close;
+          bar.tick_volume += row.tick_volume || 0;
+        }
+      });
+      return Array.from(map.values()).sort((a,b) => a.timeMs - b.timeMs);
+    }
+
+    function getCompletedResearchSeries(periodRows, timeMs, minutes, count) {
+      const latestCompletedStart = floorToPeriod(timeMs, minutes) - minutes * 60000;
+      let idx = -1;
+      for (let i = periodRows.length - 1; i >= 0; i--) {
+        if (periodRows[i].timeMs <= latestCompletedStart) { idx = i; break; }
+      }
+      if (idx < count - 1) return [];
+      return periodRows.slice(idx - count + 1, idx + 1).reverse();
+    }
+
+    function getResearchSessionGuide(timeMs) {
+      const h = new Date(timeMs).getHours();
+      let name = "その他時間";
+      let detail = "過去検証用の時間帯判定です。";
+      let score = "★★☆☆☆";
+      if (h >= 6 && h < 11) { name = "東京朝"; score = "★★☆☆☆"; }
+      else if (h >= 16 && h < 19) { name = "ロンドン序盤"; score = "★★★★☆"; }
+      else if (h >= 19 && h < 22) { name = "欧州NY前"; score = "★★★★☆"; }
+      else if (h >= 22 || h < 1) { name = "NY時間"; score = "★★★★★"; }
+      else if (h >= 11 && h < 15) { name = "東京昼"; score = "★☆☆☆☆"; }
+      return { name, detail, score };
+    }
+
+    function getResearchFutureMetrics(rows, index, side, minutes) {
+      const entry = rows[index].close;
+      const end = rows[index + minutes];
+      if (!end) return null;
+      let maxNormal = 0;
+      let maxReverse = 0;
+      for (let i = index + 1; i <= index + minutes && i < rows.length; i++) {
+        if (side === "buy") {
+          maxNormal = Math.max(maxNormal, (rows[i].high - entry) * 100);
+          maxReverse = Math.max(maxReverse, (entry - rows[i].low) * 100);
+        } else {
+          maxNormal = Math.max(maxNormal, (entry - rows[i].low) * 100);
+          maxReverse = Math.max(maxReverse, (rows[i].high - entry) * 100);
+        }
+      }
+      const normal = side === "buy" ? (end.close - entry) * 100 : (entry - end.close) * 100;
+      return {
+        normalPips: Number(normal.toFixed(1)),
+        reversePips: Number((-normal).toFixed(1)),
+        maxNormalPips: Number(maxNormal.toFixed(1)),
+        maxReversePips: Number(maxReverse.toFixed(1))
+      };
+    }
+
+    function summarizeResearchRows(records) {
+      return IDENTITY_INTERVALS.map(min => {
+        const key = `${min}m`;
+        const rows = records.filter(r => r.results?.[key]);
+        const buyRows = rows.filter(r => r.signal === "buy");
+        const sellRows = rows.filter(r => r.signal === "sell");
+        const normalWins = rows.filter(r => r.results[key].normalPips > 0).length;
+        const reverseWins = rows.filter(r => r.results[key].reversePips > 0).length;
+        const normalTotal = rows.reduce((sum,r) => sum + r.results[key].normalPips, 0);
+        const reverseTotal = rows.reduce((sum,r) => sum + r.results[key].reversePips, 0);
+        const maxNormalAvg = rows.length ? rows.reduce((sum,r) => sum + r.results[key].maxNormalPips, 0) / rows.length : null;
+        const maxReverseAvg = rows.length ? rows.reduce((sum,r) => sum + r.results[key].maxReversePips, 0) / rows.length : null;
+        return {
+          min,
+          count: rows.length,
+          normalRate: rows.length ? normalWins / rows.length * 100 : null,
+          reverseRate: rows.length ? reverseWins / rows.length * 100 : null,
+          buyNormalRate: calcResearchRate(buyRows, key, "normalPips"),
+          buyReverseRate: calcResearchRate(buyRows, key, "reversePips"),
+          sellNormalRate: calcResearchRate(sellRows, key, "normalPips"),
+          sellReverseRate: calcResearchRate(sellRows, key, "reversePips"),
+          normalAvg: rows.length ? normalTotal / rows.length : null,
+          reverseAvg: rows.length ? reverseTotal / rows.length : null,
+          normalTotal,
+          reverseTotal,
+          maxNormalAvg,
+          maxReverseAvg
+        };
+      });
+    }
+
+    function calcResearchRate(rows, key, pipsKey) {
+      if (!rows.length) return null;
+      return rows.filter(r => r.results[key][pipsKey] > 0).length / rows.length * 100;
+    }
+
+    function judgeResearchCsvSummary(rows) {
+      const shortRows = rows.filter(r => [1,3,5].includes(r.min) && r.count >= 5);
+      if (!shortRows.length) return "データ不足";
+      const reverseGood = shortRows.every(r => Number(r.reverseRate) >= 55);
+      const normalGood = shortRows.every(r => Number(r.normalRate) >= 55);
+      const ceilingBottom = shortRows.every(r => Number(r.maxReverseAvg) > Number(r.maxNormalAvg) + 0.5);
+      const delayed = shortRows.every(r => Number(r.maxNormalAvg) > 0.8 && Number(r.normalAvg) < Number(r.maxNormalAvg) * 0.35);
+      if (ceilingBottom) return "天井/底検出寄り：短期の最大逆行が最大順行を上回っています。";
+      if (delayed) return "サイン遅れ寄り：順行しても終点まで維持しにくい傾向です。";
+      if (reverseGood && !normalGood) return "短期逆ロジック優位";
+      if (normalGood && !reverseGood) return "通常ロジック優位";
+      return "通常/逆が拮抗、またはレンジ/ノイズ寄り";
+    }
+
+    async function runResearchCsvBacktest() {
+      const input = document.getElementById("researchCsvInput");
+      const status = document.getElementById("researchCsvStatus");
+      if (!input?.files?.length) {
+        alert("USDJPY_M1_20260515_20260614.csv を選択してください。");
+        return;
+      }
+      status.textContent = "CSVを読み込み中...";
+      const text = await input.files[0].text();
+      const m1Rows = parseResearchCsv(text);
+      const m5Rows = buildResearchPeriodBars(m1Rows, 5);
+      const m15Rows = buildResearchPeriodBars(m1Rows, 15);
+      const records = [];
+      for (let i = 31; i < m1Rows.length - 31; i++) {
+        const series1 = m1Rows.slice(Math.max(0, i - 60), i + 1).reverse();
+        const series5 = getCompletedResearchSeries(m5Rows, m1Rows[i].timeMs, 5, 30);
+        const series15 = getCompletedResearchSeries(m15Rows, m1Rows[i].timeMs, 15, 35);
+        if (series1.length < 30 || series5.length < 30 || series15.length < 35) continue;
+        try {
+          const env = analyzeEnvironment(series15);
+          const ha15 = analyzeHeikinAshi15(series15);
+          const setup = analyzeSetup(series5);
+          const ha5 = analyzeHeikinAshi5(series5);
+          const one = analyzeOneMinute(series1);
+          env.price = m1Rows[i].close;
+          const trend = calculateHaTrendScore(env, setup, one, ha15, ha5);
+          const counter = calculateCounterTrendScore(one, ha15, ha5);
+          const session = getResearchSessionGuide(m1Rows[i].timeMs);
+          const eventRisk = { active: false };
+          const expected = estimateExpectedWinRate(trend, counter, session, one, eventRisk);
+          const risk = { riskPercent: 0 };
+          const v35 = decideV35Judge(trend, counter, one, setup, ha5, expected, eventRisk, risk);
+          if (!isEntrySignal(v35.judge)) continue;
+          const side = getSignalSide(v35.judge);
+          const result = { time: m1Rows[i].time, signal: side, signalText: side === "buy" ? "買い入口" : "売り入口", entryPrice: m1Rows[i].close, trendScore: trend.score, counterScore: counter.score, expectedRate: expected.rate, emaDistance: one.distancePips, rsi: one.rsi14, bbPosition: one.bb?.position || "--", session: session.name, judge: v35.judge, results: {} };
+          IDENTITY_INTERVALS.forEach(min => { result.results[`${min}m`] = getResearchFutureMetrics(m1Rows, i, side, min); });
+          records.push(result);
+        } catch(e) {}
+      }
+      renderResearchCsvResult(records, m1Rows.length);
+      status.textContent = `CSV検証完了：${m1Rows.length}本中 ${records.length}件の入口サインを検出しました。`;
+    }
+
+    function renderResearchCsvResult(records, totalRows) {
+      const summaryEl = document.getElementById("researchCsvSummary");
+      const statsEl = document.getElementById("researchCsvStats");
+      const logEl = document.getElementById("researchCsvLog");
+      const rows = summarizeResearchRows(records);
+      if (summaryEl) {
+        summaryEl.textContent = `${judgeResearchCsvSummary(rows)} 検出サイン ${records.length}件 / M1 ${totalRows}本`;
+        summaryEl.className = "adviceBox " + (records.length ? "adviceTake" : "adviceHold");
+      }
+      if (statsEl) {
+        statsEl.innerHTML = `<table class="miniTable"><thead><tr><th>時間</th><th>買い→買い</th><th>買い→売り</th><th>売り→売り</th><th>売り→買い</th><th>通常平均</th><th>逆平均</th><th>最大順行</th><th>最大逆行</th><th>通常合計</th><th>逆合計</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.min}分後<br><span class="small">n=${r.count}</span></td><td>${formatRate(r.buyNormalRate)}</td><td>${formatRate(r.buyReverseRate)}</td><td>${formatRate(r.sellNormalRate)}</td><td>${formatRate(r.sellReverseRate)}</td><td>${formatIdentityPips(r.normalAvg)}</td><td>${formatIdentityPips(r.reverseAvg)}</td><td>${formatIdentityPips(r.maxNormalAvg)}</td><td>${formatIdentityPips(r.maxReverseAvg)}</td><td>${formatIdentityPips(r.normalTotal)}</td><td>${formatIdentityPips(r.reverseTotal)}</td></tr>`).join("")}</tbody></table>`;
+      }
+      if (logEl) {
+        if (!records.length) { logEl.textContent = "入口サインは検出されませんでした。"; return; }
+        logEl.innerHTML = records.slice(0, 100).map(r => {
+          const parts = IDENTITY_INTERVALS.map(min => {
+            const row = r.results[`${min}m`];
+            return `${min}分:${formatIdentityPips(row?.normalPips)}/${formatIdentityPips(row?.reversePips)} 最大順:${formatIdentityPips(row?.maxNormalPips)} 最大逆:${formatIdentityPips(row?.maxReversePips)}`;
+          }).join(" / ");
+          return `<div class="logItem">${escapeHtml(r.time)}｜${escapeHtml(r.signalText)}｜${Number(r.entryPrice).toFixed(3)}｜順:${r.trendScore} 逆:${r.counterScore} 期待:${r.expectedRate}%｜${escapeHtml(parts)}</div>`;
+        }).join("");
+      }
     }
 
     function updateAutoButtonView() { const btn = document.getElementById("autoBtn"); if (autoEnabled) { btn.textContent = "1分ごと自動分析 ON"; btn.className = "green"; } else { btn.textContent = "1分ごと自動分析 OFF"; btn.className = "red"; } }
